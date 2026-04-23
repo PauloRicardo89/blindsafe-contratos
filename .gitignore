@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# App
+output/
+local_config.json
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
