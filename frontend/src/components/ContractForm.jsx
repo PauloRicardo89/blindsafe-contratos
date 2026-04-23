@@ -225,7 +225,7 @@ function ClientSection({ data, onChange }) {
               </Select>
             </Field>
             <Field label="CEP" required
-              hint="Digite o CEP para preencher o endereço automaticamente"
+              inlineHint="— preenche o endereço automaticamente"
               error={cepErro ? 'CEP não encontrado' : undefined}>
               <div className="relative">
                 <Input value={data.cep}
