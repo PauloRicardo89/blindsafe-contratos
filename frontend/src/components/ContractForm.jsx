@@ -2,13 +2,49 @@ import { useState } from 'react'
 import { Plus, Trash2, FileDown, ChevronDown, ChevronUp, Loader } from 'lucide-react'
 import { Card, SectionTitle, Field, Input, Select, Btn, Checkbox } from './ui'
 
+// ─── UFs brasileiras ─────────────────────────────────────────────────────────
+const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS',
+             'MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC',
+             'SP','SE','TO']
+
+// ─── Formatadores ─────────────────────────────────────────────────────────────
+
+function fmtCEP(v) {
+  const n = v.replace(/\D/g, '').slice(0, 8)
+  return n.length > 5 ? `${n.slice(0,5)}-${n.slice(5)}` : n
+}
+
+function fmtCPF(v) {
+  const n = v.replace(/\D/g, '').slice(0, 11)
+  if (n.length <= 3) return n
+  if (n.length <= 6) return `${n.slice(0,3)}.${n.slice(3)}`
+  if (n.length <= 9) return `${n.slice(0,3)}.${n.slice(3,6)}.${n.slice(6)}`
+  return `${n.slice(0,3)}.${n.slice(3,6)}.${n.slice(6,9)}-${n.slice(9)}`
+}
+
+function fmtBRL(v) {
+  // Remove tudo que não for dígito
+  const n = v.replace(/\D/g, '')
+  if (!n) return ''
+  // Converte para centavos e formata
+  const cents = parseInt(n, 10)
+  const reais = (cents / 100).toFixed(2)
+  const [int, dec] = reais.split('.')
+  const intFmt = int.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  return `${intFmt},${dec}`
+}
+
+function fmtOnlyNum(v) {
+  return v.replace(/\D/g, '')
+}
+
 // ─── Valores iniciais ────────────────────────────────────────────────────────
 
 const EMPTY_CLIENT = {
   nome: '', nacionalidade: 'brasileiro', estado_civil: 'solteiro',
   profissao: '', cpf: '', rg: '',
-  rua: '', bairro: '', complemento: '', cidade: '', uf: '', cep: '',
-  email: '', telefone: '',
+  rua: '', bairro: '', complemento: '', cidade: '', uf: 'RJ', cep: '',
+  email: '',
 }
 
 const EMPTY_PROCESS = {
@@ -34,23 +70,17 @@ const EMPTY_PAYMENT_AVISTA = {
   tipo: 'avista', valor_total: '', data: '',
 }
 
-// ─── Contrato tipos ──────────────────────────────────────────────────────────
-
 const CONTRACT_TYPES = [
-  { value: 'emprestimo',      label: 'Empréstimo Bancário' },
-  { value: 'veiculo',         label: 'Veículo (Financiamento)' },
-  { value: 'fiscal',          label: 'Execução Fiscal' },
-  { value: 'condominio',      label: 'Condomínio' },
+  { value: 'emprestimo',         label: 'Empréstimo Bancário' },
+  { value: 'veiculo',            label: 'Veículo (Financiamento)' },
+  { value: 'fiscal',             label: 'Execução Fiscal' },
+  { value: 'condominio',         label: 'Condomínio' },
   { value: 'condominio_aluguel', label: 'Condomínio + Aluguel' },
-  { value: 'rural',           label: 'Rural / Agro' },
+  { value: 'rural',              label: 'Rural / Agro' },
 ]
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function pyapi(fn, ...args) {
   if (window.pywebview?.api) return window.pywebview.api[fn](...args)
-  // modo dev: simula resposta
-  console.warn('pywebview não disponível — modo dev')
   return Promise.resolve({ ok: true, path: 'C:/saida/contrato.docx' })
 }
 
@@ -58,15 +88,19 @@ function pyapi(fn, ...args) {
 
 function ClientSection({ data, onChange }) {
   const f = (k) => (v) => onChange({ ...data, [k]: v })
+
   return (
     <Card className="p-6">
       <SectionTitle>Dados do Cliente</SectionTitle>
       <div className="grid grid-cols-2 gap-4">
+
         <Field label="Nome Completo" required className="col-span-2">
-          <Input value={data.nome} onChange={e => f('nome')(e.target.value.toUpperCase())}
+          <Input value={data.nome}
+            onChange={e => f('nome')(e.target.value.toUpperCase())}
             placeholder="NOME COMPLETO EM MAIÚSCULAS" />
         </Field>
-        <Field label="Nacionalidade">
+
+        <Field label="Nacionalidade" required>
           <Select value={data.nacionalidade} onChange={e => f('nacionalidade')(e.target.value)}>
             <option value="brasileiro">Brasileiro</option>
             <option value="brasileira">Brasileira</option>
@@ -74,7 +108,8 @@ function ClientSection({ data, onChange }) {
             <option value="estrangeira">Estrangeira</option>
           </Select>
         </Field>
-        <Field label="Estado Civil">
+
+        <Field label="Estado Civil" required>
           <Select value={data.estado_civil} onChange={e => f('estado_civil')(e.target.value)}>
             <option value="solteiro">Solteiro(a)</option>
             <option value="casado">Casado(a)</option>
@@ -83,57 +118,75 @@ function ClientSection({ data, onChange }) {
             <option value="uniao_estavel">União Estável</option>
           </Select>
         </Field>
+
         <Field label="Profissão" required>
-          <Input value={data.profissao} onChange={e => f('profissao')(e.target.value)}
+          <Input value={data.profissao}
+            onChange={e => f('profissao')(e.target.value)}
             placeholder="ex: empresário, auxiliar de produção..." />
         </Field>
+
         <Field label="CPF" required>
-          <Input value={data.cpf} onChange={e => f('cpf')(e.target.value)}
+          <Input value={data.cpf}
+            onChange={e => f('cpf')(fmtCPF(e.target.value))}
             placeholder="000.000.000-00" maxLength={14} />
         </Field>
+
         <Field label="RG / CNH">
-          <Input value={data.rg} onChange={e => f('rg')(e.target.value)}
+          <Input value={data.rg}
+            onChange={e => f('rg')(e.target.value)}
             placeholder="Número do documento" />
         </Field>
+
         <Field label="E-mail">
-          <Input value={data.email} onChange={e => f('email')(e.target.value)}
+          <Input value={data.email}
+            onChange={e => f('email')(e.target.value)}
             placeholder="email@exemplo.com" type="email" />
         </Field>
-        <Field label="Telefone">
-          <Input value={data.telefone} onChange={e => f('telefone')(e.target.value)}
-            placeholder="(21) 9 9999-9999" />
-        </Field>
+
       </div>
 
+      {/* Endereço */}
       <div className="mt-4 pt-4 border-t border-amber-200/60">
         <p className="text-xs font-bold text-brand-dark/50 uppercase tracking-wider mb-3">Endereço</p>
         <div className="grid grid-cols-2 gap-4">
+
           <Field label="Rua / Av. + Número" required className="col-span-2">
-            <Input value={data.rua} onChange={e => f('rua')(e.target.value)}
+            <Input value={data.rua}
+              onChange={e => f('rua')(e.target.value)}
               placeholder="Rua Exemplo, nº 100, Apto 101" />
           </Field>
-          <Field label="Bairro">
-            <Input value={data.bairro} onChange={e => f('bairro')(e.target.value)}
+
+          <Field label="Bairro" required>
+            <Input value={data.bairro}
+              onChange={e => f('bairro')(e.target.value)}
               placeholder="Nome do Bairro" />
           </Field>
+
           <Field label="Complemento">
-            <Input value={data.complemento} onChange={e => f('complemento')(e.target.value)}
+            <Input value={data.complemento}
+              onChange={e => f('complemento')(e.target.value)}
               placeholder="Bloco, sala, etc." />
           </Field>
+
           <Field label="Cidade" required>
-            <Input value={data.cidade} onChange={e => f('cidade')(e.target.value)}
+            <Input value={data.cidade}
+              onChange={e => f('cidade')(e.target.value)}
               placeholder="Nome da Cidade" />
           </Field>
+
           <div className="grid grid-cols-2 gap-3">
             <Field label="UF" required>
-              <Input value={data.uf} onChange={e => f('uf')(e.target.value.toUpperCase())}
-                placeholder="RJ" maxLength={2} />
+              <Select value={data.uf} onChange={e => f('uf')(e.target.value)}>
+                {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+              </Select>
             </Field>
-            <Field label="CEP">
-              <Input value={data.cep} onChange={e => f('cep')(e.target.value)}
+            <Field label="CEP" required>
+              <Input value={data.cep}
+                onChange={e => f('cep')(fmtCEP(e.target.value))}
                 placeholder="00000-000" maxLength={9} />
             </Field>
           </div>
+
         </div>
       </div>
     </Card>
@@ -148,10 +201,8 @@ function ProcessCard({ proc, idx, onChange, onRemove, canRemove }) {
 
   return (
     <div className="border border-amber-200/60 rounded-xl bg-white overflow-hidden">
-      <div
-        className="flex items-center justify-between px-4 py-3 bg-brand-bg cursor-pointer"
-        onClick={() => setOpen(o => !o)}
-      >
+      <div className="flex items-center justify-between px-4 py-3 bg-brand-bg cursor-pointer"
+        onClick={() => setOpen(o => !o)}>
         <span className="text-sm font-semibold text-brand-dark">
           Processo / Dívida {idx + 1}
           {proc.banco && <span className="ml-2 text-brand-muted font-normal">— {proc.banco}</span>}
@@ -169,52 +220,68 @@ function ProcessCard({ proc, idx, onChange, onRemove, canRemove }) {
 
       {open && (
         <div className="p-4 grid grid-cols-2 gap-4">
+
           <Field label="Banco / Instituição" required className="col-span-2">
-            <Input value={proc.banco} onChange={e => f('banco')(e.target.value.toUpperCase())}
+            <Input value={proc.banco}
+              onChange={e => f('banco')(e.target.value.toUpperCase())}
               placeholder="NOME DO BANCO OU COOPERATIVA" />
           </Field>
-          <Field label="Dívida Atual (R$)">
-            <Input value={proc.divida} onChange={e => f('divida')(e.target.value)}
-              placeholder="68.847,49" />
+
+          <Field label="Dívida Atual (R$)" required>
+            <Input value={proc.divida}
+              onChange={e => f('divida')(fmtBRL(e.target.value))}
+              placeholder="0,00" />
           </Field>
+
           <Field label="Valor da Parcela (R$)">
-            <Input value={proc.valor_parcela} onChange={e => f('valor_parcela')(e.target.value)}
-              placeholder="1.379,90" />
+            <Input value={proc.valor_parcela}
+              onChange={e => f('valor_parcela')(fmtBRL(e.target.value))}
+              placeholder="0,00" />
           </Field>
+
           <Field label="Parcelas Totais">
-            <Input value={proc.parcelas_totais} onChange={e => f('parcelas_totais')(e.target.value)}
-              placeholder="48" />
+            <Input value={proc.parcelas_totais}
+              onChange={e => f('parcelas_totais')(fmtOnlyNum(e.target.value))}
+              placeholder="48" maxLength={3} />
           </Field>
+
           <Field label="Parcelas Pagas">
-            <Input value={proc.parcelas_pagas} onChange={e => f('parcelas_pagas')(e.target.value)}
-              placeholder="13" />
+            <Input value={proc.parcelas_pagas}
+              onChange={e => f('parcelas_pagas')(fmtOnlyNum(e.target.value))}
+              placeholder="13" maxLength={3} />
           </Field>
+
           <Field label="Parcelas em Aberto">
-            <Input value={proc.parcelas_abertas} onChange={e => f('parcelas_abertas')(e.target.value)}
-              placeholder="35" />
+            <Input value={proc.parcelas_abertas}
+              onChange={e => f('parcelas_abertas')(fmtOnlyNum(e.target.value))}
+              placeholder="35" maxLength={3} />
           </Field>
+
           <Field label="Parcelas Vencidas">
-            <Input value={proc.parcelas_vencidas} onChange={e => f('parcelas_vencidas')(e.target.value)}
-              placeholder="0" />
+            <Input value={proc.parcelas_vencidas}
+              onChange={e => f('parcelas_vencidas')(fmtOnlyNum(e.target.value))}
+              placeholder="0" maxLength={3} />
           </Field>
 
           <div className="col-span-2 pt-2 border-t border-amber-100">
             <Field label="Existe Processo Judicial?">
-              <Select value={proc.existe_processo} onChange={e => f('existe_processo')(e.target.value)}>
+              <Select value={proc.existe_processo}
+                onChange={e => f('existe_processo')(e.target.value)}>
                 <option value="nao">Não</option>
-                <option value="sim_eles">Sim — eles entraram contra nós</option>
-                <option value="sim_nos">Sim — nós entramos com a ação</option>
+                <option value="sim">Sim</option>
               </Select>
             </Field>
-            {proc.existe_processo !== 'nao' && (
+            {proc.existe_processo === 'sim' && (
               <div className="mt-3">
                 <Field label="Número do Processo">
-                  <Input value={proc.numero_processo} onChange={e => f('numero_processo')(e.target.value)}
+                  <Input value={proc.numero_processo}
+                    onChange={e => f('numero_processo')(e.target.value)}
                     placeholder="0000000-00.0000.0.00.0000" />
                 </Field>
               </div>
             )}
           </div>
+
         </div>
       )}
     </div>
@@ -222,7 +289,7 @@ function ProcessCard({ proc, idx, onChange, onRemove, canRemove }) {
 }
 
 function ProcessesSection({ processes, onChange }) {
-  const add = () => onChange([...processes, { ...EMPTY_PROCESS }])
+  const add    = () => onChange([...processes, { ...EMPTY_PROCESS }])
   const remove = (i) => onChange(processes.filter((_, idx) => idx !== i))
   const update = (i, val) => onChange(processes.map((p, idx) => idx === i ? val : p))
 
@@ -255,28 +322,34 @@ function VehicleSection({ data, onChange }) {
       <SectionTitle>Dados do Veículo</SectionTitle>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Marca / Modelo" required className="col-span-2">
-          <Input value={data.marca_modelo} onChange={e => f('marca_modelo')(e.target.value.toUpperCase())}
+          <Input value={data.marca_modelo}
+            onChange={e => f('marca_modelo')(e.target.value.toUpperCase())}
             placeholder="VW - VOLKSWAGEN GOL CITY 1.0 MI FLEX 8V 2P" />
         </Field>
         <Field label="Ano/Modelo" required>
-          <Input value={data.ano} onChange={e => f('ano')(e.target.value)}
+          <Input value={data.ano}
+            onChange={e => f('ano')(fmtOnlyNum(e.target.value))}
             placeholder="2015" maxLength={4} />
         </Field>
         <Field label="Placa" required>
-          <Input value={data.placa} onChange={e => f('placa')(e.target.value.toUpperCase())}
+          <Input value={data.placa}
+            onChange={e => f('placa')(e.target.value.toUpperCase())}
             placeholder="AYV2H79" maxLength={7} />
         </Field>
         <Field label="Cor">
-          <Input value={data.cor} onChange={e => f('cor')(e.target.value.toUpperCase())}
+          <Input value={data.cor}
+            onChange={e => f('cor')(e.target.value.toUpperCase())}
             placeholder="BRANCA" />
         </Field>
         <Field label="RENAVAM">
-          <Input value={data.renavam} onChange={e => f('renavam')(e.target.value)}
+          <Input value={data.renavam}
+            onChange={e => f('renavam')(fmtOnlyNum(e.target.value))}
             placeholder="1019855522" />
         </Field>
         <Field label="Observação" className="col-span-2">
-          <Input value={data.observacao} onChange={e => f('observacao')(e.target.value)}
-            placeholder="ex: veículo não está no mesmo endereço do carnê de financiamento" />
+          <Input value={data.observacao}
+            onChange={e => f('observacao')(e.target.value)}
+            placeholder="ex: veículo não está no mesmo endereço do carnê" />
         </Field>
       </div>
     </Card>
@@ -297,7 +370,6 @@ function PaymentSection({ data, onChange }) {
     <Card className="p-6">
       <SectionTitle>Pagamento dos Honorários</SectionTitle>
 
-      {/* Seletor de tipo */}
       <div className="flex gap-2 mb-5">
         {[
           { v: 'boleto', l: 'Boleto / PIX Parcelado' },
@@ -315,28 +387,32 @@ function PaymentSection({ data, onChange }) {
         ))}
       </div>
 
-      {/* Campos por tipo */}
       {data.tipo === 'boleto' && (
         <div className="grid grid-cols-2 gap-4">
           <Field label="Valor Total (R$)" required className="col-span-2">
-            <Input value={data.valor_total} onChange={e => f('valor_total')(e.target.value)}
-              placeholder="6.000,00" />
+            <Input value={data.valor_total}
+              onChange={e => f('valor_total')(fmtBRL(e.target.value))}
+              placeholder="0,00" />
           </Field>
           <Field label="Valor da Entrada (R$)" required>
-            <Input value={data.valor_entrada} onChange={e => f('valor_entrada')(e.target.value)}
-              placeholder="1.000,00" />
+            <Input value={data.valor_entrada}
+              onChange={e => f('valor_entrada')(fmtBRL(e.target.value))}
+              placeholder="0,00" />
           </Field>
-          <Field label="Data da Entrada" required hint="Data da 1ª parcela — as demais são geradas automaticamente">
-            <Input value={data.data_entrada} onChange={e => f('data_entrada')(e.target.value)}
+          <Field label="Data da Entrada" required hint="As demais parcelas são geradas automaticamente">
+            <Input value={data.data_entrada}
+              onChange={e => f('data_entrada')(e.target.value)}
               placeholder="24/04/2026" maxLength={10} />
           </Field>
           <Field label="Nº de Parcelas Restantes" required hint="Não conta a entrada">
-            <Input value={data.n_parcelas} onChange={e => f('n_parcelas')(e.target.value)}
-              placeholder="5" type="number" min="1" />
+            <Input value={data.n_parcelas}
+              onChange={e => f('n_parcelas')(fmtOnlyNum(e.target.value))}
+              placeholder="5" maxLength={2} />
           </Field>
           <Field label="Valor de Cada Parcela (R$)" required>
-            <Input value={data.valor_parcela} onChange={e => f('valor_parcela')(e.target.value)}
-              placeholder="1.000,00" />
+            <Input value={data.valor_parcela}
+              onChange={e => f('valor_parcela')(fmtBRL(e.target.value))}
+              placeholder="0,00" />
           </Field>
         </div>
       )}
@@ -344,19 +420,23 @@ function PaymentSection({ data, onChange }) {
       {data.tipo === 'cartao' && (
         <div className="grid grid-cols-2 gap-4">
           <Field label="Valor Total (R$)" required className="col-span-2">
-            <Input value={data.valor_total} onChange={e => f('valor_total')(e.target.value)}
-              placeholder="2.000,00" />
+            <Input value={data.valor_total}
+              onChange={e => f('valor_total')(fmtBRL(e.target.value))}
+              placeholder="0,00" />
           </Field>
           <Field label="Nº de Parcelas" required>
-            <Input value={data.n_parcelas} onChange={e => f('n_parcelas')(e.target.value)}
-              placeholder="10" type="number" min="1" max="12" />
+            <Input value={data.n_parcelas}
+              onChange={e => f('n_parcelas')(fmtOnlyNum(e.target.value))}
+              placeholder="10" maxLength={2} />
           </Field>
           <Field label="Valor de Cada Parcela (R$)">
-            <Input value={data.valor_parcela} onChange={e => f('valor_parcela')(e.target.value)}
-              placeholder="200,00" />
+            <Input value={data.valor_parcela}
+              onChange={e => f('valor_parcela')(fmtBRL(e.target.value))}
+              placeholder="0,00" />
           </Field>
           <Field label="Data do Pagamento" required>
-            <Input value={data.data} onChange={e => f('data')(e.target.value)}
+            <Input value={data.data}
+              onChange={e => f('data')(e.target.value)}
               placeholder="11/05/2026" maxLength={10} />
           </Field>
         </div>
@@ -365,11 +445,13 @@ function PaymentSection({ data, onChange }) {
       {data.tipo === 'avista' && (
         <div className="grid grid-cols-2 gap-4">
           <Field label="Valor Total (R$)" required>
-            <Input value={data.valor_total} onChange={e => f('valor_total')(e.target.value)}
-              placeholder="3.000,00" />
+            <Input value={data.valor_total}
+              onChange={e => f('valor_total')(fmtBRL(e.target.value))}
+              placeholder="0,00" />
           </Field>
           <Field label="Data do Pagamento" required>
-            <Input value={data.data} onChange={e => f('data')(e.target.value)}
+            <Input value={data.data}
+              onChange={e => f('data')(e.target.value)}
               placeholder="23/04/2026" maxLength={10} />
           </Field>
         </div>
@@ -378,7 +460,7 @@ function PaymentSection({ data, onChange }) {
   )
 }
 
-// ─── Seção: Documentos a Gerar ───────────────────────────────────────────────
+// ─── Seção: Documentos ───────────────────────────────────────────────────────
 
 function DocsSection({ docs, onChange }) {
   const toggle = (k) => onChange({ ...docs, [k]: !docs[k] })
@@ -386,9 +468,9 @@ function DocsSection({ docs, onChange }) {
     <Card className="p-6">
       <SectionTitle>Documentos a Gerar</SectionTitle>
       <div className="flex gap-6">
-        <Checkbox label="Contrato" checked={docs.contrato} onChange={() => toggle('contrato')} />
-        <Checkbox label="Procuração" checked={docs.procuracao} onChange={() => toggle('procuracao')} />
-        <Checkbox label="Hipossuficiência" checked={docs.hipo} onChange={() => toggle('hipo')} />
+        <Checkbox label="Contrato"         checked={docs.contrato}   onChange={() => toggle('contrato')} />
+        <Checkbox label="Procuração"       checked={docs.procuracao} onChange={() => toggle('procuracao')} />
+        <Checkbox label="Hipossuficiência" checked={docs.hipo}       onChange={() => toggle('hipo')} />
       </div>
     </Card>
   )
@@ -397,14 +479,14 @@ function DocsSection({ docs, onChange }) {
 // ─── Componente principal ────────────────────────────────────────────────────
 
 export default function ContractForm() {
-  const [client, setClient] = useState({ ...EMPTY_CLIENT })
+  const [client, setClient]         = useState({ ...EMPTY_CLIENT })
   const [contractType, setContractType] = useState('emprestimo')
-  const [processes, setProcesses] = useState([{ ...EMPTY_PROCESS }])
-  const [vehicle, setVehicle] = useState({ ...EMPTY_VEHICLE })
-  const [payment, setPayment] = useState({ ...EMPTY_PAYMENT_BOLETO })
-  const [docs, setDocs] = useState({ contrato: true, procuracao: true, hipo: false })
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState(null)
+  const [processes, setProcesses]   = useState([{ ...EMPTY_PROCESS }])
+  const [vehicle, setVehicle]       = useState({ ...EMPTY_VEHICLE })
+  const [payment, setPayment]       = useState({ ...EMPTY_PAYMENT_BOLETO })
+  const [docs, setDocs]             = useState({ contrato: true, procuracao: true, hipo: false })
+  const [loading, setLoading]       = useState(false)
+  const [result, setResult]         = useState(null)
 
   const handleGenerate = async () => {
     if (!client.nome || !client.cpf || !client.cidade) {
@@ -444,7 +526,6 @@ export default function ContractForm() {
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-dark">Novo Contrato</h1>
@@ -482,7 +563,6 @@ export default function ContractForm() {
 
       <DocsSection docs={docs} onChange={setDocs} />
 
-      {/* Resultado */}
       {result && (
         <Card className={`p-4 border-2 ${result.ok ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'}`}>
           {result.ok ? (
@@ -499,10 +579,11 @@ export default function ContractForm() {
         </Card>
       )}
 
-      {/* Botão Gerar */}
       <div className="flex justify-end pb-8">
         <Btn variant="dark" onClick={handleGenerate} disabled={loading} className="px-8 py-3 text-base">
-          {loading ? <><Loader size={16} className="animate-spin" /> Gerando...</> : <><FileDown size={16} /> Gerar Documentos</>}
+          {loading
+            ? <><Loader size={16} className="animate-spin" /> Gerando...</>
+            : <><FileDown size={16} /> Gerar Documentos</>}
         </Btn>
       </div>
     </div>

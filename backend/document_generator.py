@@ -280,7 +280,7 @@ def build_context(payload: dict) -> dict[str, Any]:
     proc0 = processes[0] if processes else {}
 
     def proc_existe(p: dict) -> str:
-        ep = p.get("existe_processo", "nao")
+        ep  = p.get("existe_processo", "nao")
         num = p.get("numero_processo", "")
         if ep == "nao":
             return "Não"
