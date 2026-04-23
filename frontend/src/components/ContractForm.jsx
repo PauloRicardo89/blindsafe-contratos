@@ -103,15 +103,23 @@ async function buscarCEP(cep, data, onChange, setLoading, setErro) {
   setLoading(true)
   setErro(false)
   try {
-    const res  = await fetch(`https://viacep.com.br/ws/${n}/json/`)
-    const json = await res.json()
-    if (json.erro) { setErro(true); return }
+    let result
+    if (window.pywebview?.api) {
+      result = await window.pywebview.api.buscar_cep(cep)
+    } else {
+      const res  = await fetch(`https://viacep.com.br/ws/${n}/json/`)
+      const json = await res.json()
+      result = json.erro
+        ? { ok: false }
+        : { ok: true, rua: json.logradouro, bairro: json.bairro, cidade: json.localidade, uf: json.uf }
+    }
+    if (!result.ok) { setErro(true); return }
     onChange({
       ...data,
-      rua:    json.logradouro || data.rua,
-      bairro: json.bairro     || data.bairro,
-      cidade: json.localidade || data.cidade,
-      uf:     json.uf         || data.uf,
+      rua:    result.rua    || data.rua,
+      bairro: result.bairro || data.bairro,
+      cidade: result.cidade || data.cidade,
+      uf:     result.uf     || data.uf,
     })
   } catch {
     // sem internet — mantém preenchimento manual

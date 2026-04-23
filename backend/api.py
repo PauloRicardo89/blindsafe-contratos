@@ -135,6 +135,30 @@ class BlindSafeAPI:
         except Exception as e:
             return {"ok": False, "error": f"Erro inesperado: {e}"}
 
+    # ── CEP ───────────────────────────────────────────────────────────────────
+
+    def buscar_cep(self, cep: str) -> dict:
+        """Consulta ViaCEP e retorna os dados de endereço."""
+        import re
+        import requests
+        n = re.sub(r'\D', '', cep)
+        if len(n) != 8:
+            return {"ok": False, "error": "CEP inválido"}
+        try:
+            r = requests.get(f"https://viacep.com.br/ws/{n}/json/", timeout=5)
+            data = r.json()
+            if data.get("erro"):
+                return {"ok": False, "error": "CEP não encontrado"}
+            return {
+                "ok":     True,
+                "rua":    data.get("logradouro", ""),
+                "bairro": data.get("bairro", ""),
+                "cidade": data.get("localidade", ""),
+                "uf":     data.get("uf", ""),
+            }
+        except Exception:
+            return {"ok": False, "error": "Sem conexão"}
+
     # ── Utilitários ───────────────────────────────────────────────────────────
 
     def open_folder(self, path: str) -> dict:
