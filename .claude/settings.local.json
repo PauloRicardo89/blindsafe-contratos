@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/prpau/OneDrive/Desktop/**)",
+      "Bash(python -c ' *)",
+      "Bash(.venv/Scripts/python -c ' *)",
+      "Bash(python3 -c \"import docx\")",
+      "Bash(pip install *)",
+      "Bash(python3 -c ' *)",
+      "Bash(/c/Users/prpau/AppData/Local/Programs/Python/Python313/python -c ' *)",
+      "Bash(/c/Users/prpau/AppData/Local/Programs/Python/Python313/python -m pip install python-docx -q)",
+      "Bash(npm --version)",
+      "Bash(npm create *)",
+      "Bash(npm install *)",
+      "Bash(npx tailwindcss *)",
+      "Bash(/c/Users/prpau/AppData/Local/Programs/Python/Python313/python -m pip install pywebview docxtpl)",
+      "Bash(npm run *)",
+      "Bash(git -C \"C:/Users/prpau/OneDrive/Desktop/Contrato-rápido/Contrato-automatico\" log --oneline)"
+    ]
+  }
+}
