@@ -218,32 +218,31 @@ function ClientSection({ data, onChange }) {
               placeholder="Nome da Cidade" />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="UF" required>
-              <Select value={data.uf} onChange={e => f('uf')(e.target.value)}>
-                {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
-              </Select>
-            </Field>
-            <Field label="CEP" required
-              inlineHint="— auto-preenche"
-              error={cepErro ? 'CEP não encontrado' : undefined}>
-              <div className="relative">
-                <Input value={data.cep}
-                  onChange={e => {
-                    const fmt     = fmtCEP(e.target.value)
-                    const updated = { ...data, cep: fmt }
-                    onChange(updated)
-                    setCepErro(false)
-                    if (fmt.length === 9) buscarCEP(fmt, updated, onChange, setCepLoading, setCepErro)
-                  }}
-                  placeholder="00000-000" maxLength={9} disabled={cepLoading}
-                  className={cepLoading ? 'pr-8' : ''} />
-                {cepLoading && (
-                  <Loader size={14} className="animate-spin absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-muted" />
-                )}
-              </div>
-            </Field>
-          </div>
+          <Field label="UF" required>
+            <Select value={data.uf} onChange={e => f('uf')(e.target.value)}>
+              {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+            </Select>
+          </Field>
+
+          <Field label="CEP" required
+            inlineHint="— auto-preenche"
+            error={cepErro ? 'CEP não encontrado' : undefined}>
+            <div className="relative">
+              <Input value={data.cep}
+                onChange={e => {
+                  const fmt     = fmtCEP(e.target.value)
+                  const updated = { ...data, cep: fmt }
+                  onChange(updated)
+                  setCepErro(false)
+                  if (fmt.length === 9) buscarCEP(fmt, updated, onChange, setCepLoading, setCepErro)
+                }}
+                placeholder="00000-000" maxLength={9} disabled={cepLoading}
+                className={cepLoading ? 'pr-8' : ''} />
+              {cepLoading && (
+                <Loader size={14} className="animate-spin absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-muted" />
+              )}
+            </div>
+          </Field>
 
         </div>
       </div>
