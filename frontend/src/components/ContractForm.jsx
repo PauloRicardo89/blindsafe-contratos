@@ -224,11 +224,18 @@ function ClientSection({ data, onChange }) {
                 {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
               </Select>
             </Field>
-            <Field label="CEP" required error={cepErro ? 'CEP não encontrado' : undefined}>
+            <Field label="CEP" required
+              hint="Digite o CEP para preencher o endereço automaticamente"
+              error={cepErro ? 'CEP não encontrado' : undefined}>
               <div className="relative">
                 <Input value={data.cep}
-                  onChange={e => { f('cep')(fmtCEP(e.target.value)); setCepErro(false) }}
-                  onBlur={e => buscarCEP(e.target.value, data, onChange, setCepLoading, setCepErro)}
+                  onChange={e => {
+                    const fmt     = fmtCEP(e.target.value)
+                    const updated = { ...data, cep: fmt }
+                    onChange(updated)
+                    setCepErro(false)
+                    if (fmt.length === 9) buscarCEP(fmt, updated, onChange, setCepLoading, setCepErro)
+                  }}
                   placeholder="00000-000" maxLength={9} disabled={cepLoading}
                   className={cepLoading ? 'pr-8' : ''} />
                 {cepLoading && (
