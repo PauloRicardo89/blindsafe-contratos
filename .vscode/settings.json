@@ -1,5 +1,5 @@
 {
-  "python.defaultInterpreterPath": "C:\\Users\\prpau\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+  "python.defaultInterpreterPath": "C:\\Users\\prpau\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
   "python.terminal.activateEnvironment": false,
   "code-runner.executorMap": {
     "python": "python"
