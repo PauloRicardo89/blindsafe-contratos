@@ -17,14 +17,15 @@ export function SectionTitle({ children }) {
   )
 }
 
-export function Field({ label, required, children, hint }) {
+export function Field({ label, required, children, hint, error }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-xs font-semibold text-brand-dark/70 uppercase tracking-wide">
         {label}{required && <span className="text-red-400 ml-1">*</span>}
       </label>
       {children}
-      {hint && <p className="text-xs text-brand-muted">{hint}</p>}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      {hint && !error && <p className="text-xs text-brand-muted">{hint}</p>}
     </div>
   )
 }

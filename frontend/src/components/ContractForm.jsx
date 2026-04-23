@@ -97,8 +97,33 @@ function pyapi(fn, ...args) {
 
 // ─── Seção: Dados do Cliente ─────────────────────────────────────────────────
 
+async function buscarCEP(cep, data, onChange, setLoading, setErro) {
+  const n = cep.replace(/\D/g, '')
+  if (n.length !== 8) return
+  setLoading(true)
+  setErro(false)
+  try {
+    const res  = await fetch(`https://viacep.com.br/ws/${n}/json/`)
+    const json = await res.json()
+    if (json.erro) { setErro(true); return }
+    onChange({
+      ...data,
+      rua:    json.logradouro || data.rua,
+      bairro: json.bairro     || data.bairro,
+      cidade: json.localidade || data.cidade,
+      uf:     json.uf         || data.uf,
+    })
+  } catch {
+    // sem internet — mantém preenchimento manual
+  } finally {
+    setLoading(false)
+  }
+}
+
 function ClientSection({ data, onChange }) {
   const f = (k) => (v) => onChange({ ...data, [k]: v })
+  const [cepLoading, setCepLoading] = useState(false)
+  const [cepErro,    setCepErro]    = useState(false)
 
   return (
     <Card className="p-6">
@@ -191,10 +216,17 @@ function ClientSection({ data, onChange }) {
                 {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
               </Select>
             </Field>
-            <Field label="CEP" required>
-              <Input value={data.cep}
-                onChange={e => f('cep')(fmtCEP(e.target.value))}
-                placeholder="00000-000" maxLength={9} />
+            <Field label="CEP" required error={cepErro ? 'CEP não encontrado' : undefined}>
+              <div className="relative">
+                <Input value={data.cep}
+                  onChange={e => { f('cep')(fmtCEP(e.target.value)); setCepErro(false) }}
+                  onBlur={e => buscarCEP(e.target.value, data, onChange, setCepLoading, setCepErro)}
+                  placeholder="00000-000" maxLength={9} disabled={cepLoading}
+                  className={cepLoading ? 'pr-8' : ''} />
+                {cepLoading && (
+                  <Loader size={14} className="animate-spin absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-muted" />
+                )}
+              </div>
             </Field>
           </div>
 
