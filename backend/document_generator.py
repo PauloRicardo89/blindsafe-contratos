@@ -267,6 +267,15 @@ def build_context(payload: dict) -> dict[str, Any]:
     c61, c62 = build_clausula_6(payment)
     qr_custos = build_quadro_custos(payment)
 
+    # Taxa de rescisão = valor da entrada (boleto) ou valor total (cartão/à vista)
+    tipo_pgto = payment.get("tipo", "boleto")
+    if tipo_pgto == "boleto":
+        _taxa_str = payment.get("valor_entrada", "")
+    else:
+        _taxa_str = payment.get("valor_total", "")
+    taxa_brl    = _fmt_brl(_taxa_str)
+    taxa_extenso = valor_extenso(_taxa_str)
+
     # Processo(s) — pega o primeiro para campos simples, lista completa para loop
     proc0 = processes[0] if processes else {}
 
@@ -342,6 +351,10 @@ def build_context(payload: dict) -> dict[str, Any]:
 
         # Tipo do contrato
         "tipo_contrato": contract_type,
+
+        # Cláusula 7.4 — taxa de rescisão antecipada
+        "taxa_rescisao":         taxa_brl,
+        "taxa_rescisao_extenso": taxa_extenso,
     }
     return ctx
 
