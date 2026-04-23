@@ -140,13 +140,15 @@ class BlindSafeAPI:
     def buscar_cep(self, cep: str) -> dict:
         """Consulta ViaCEP e retorna os dados de endereço."""
         import re
-        import requests
+        import json as _json
+        import urllib.request
         n = re.sub(r'\D', '', cep)
         if len(n) != 8:
             return {"ok": False, "error": "CEP inválido"}
         try:
-            r = requests.get(f"https://viacep.com.br/ws/{n}/json/", timeout=5)
-            data = r.json()
+            url = f"https://viacep.com.br/ws/{n}/json/"
+            with urllib.request.urlopen(url, timeout=5) as resp:
+                data = _json.loads(resp.read().decode("utf-8"))
             if data.get("erro"):
                 return {"ok": False, "error": "CEP não encontrado"}
             return {
