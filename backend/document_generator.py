@@ -6,12 +6,29 @@ Sem dependência de internet, Gemini ou Bitrix.
 from __future__ import annotations
 
 import calendar
+import re
 import shutil
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-from docxtpl import DocxTemplate
+from docxtpl import DocxTemplate, RichText
+
+# ── RichText helpers ─────────────────────────────────────────────────────────
+
+_BOLD_6 = {'CONTRATANTE', 'CONTRATADA'}
+
+def _rt_bold(text: str, bold_words: set) -> RichText:
+    """Cria RichText com as palavras indicadas em negrito."""
+    rt = RichText()
+    pattern = '(' + '|'.join(re.escape(w) for w in sorted(bold_words, key=len, reverse=True)) + ')'
+    for i, line in enumerate(text.split('\n')):
+        if i > 0:
+            rt.add('\n')
+        for part in re.split(pattern, line):
+            if part:
+                rt.add(part, bold=(part in bold_words))
+    return rt
 
 # ── Meses em português ────────────────────────────────────────────────────────
 _MESES = [
@@ -115,15 +132,17 @@ def build_clausula_6(payment: dict) -> tuple[str, str]:
     total_brl     = _fmt_brl(valor_total)
     total_ext     = valor_extenso(valor_total)
 
+    _bold = _BOLD_6 | {'6.1.', '6.1'}
+
     if tipo == "avista":
         data_pgto = payment.get("data", "")
-        c61 = (
+        txt = (
             f"6.1. Pela prestação dos serviços descritos neste contrato, "
             f"O CONTRATANTE pagará à CONTRATADA o valor de {total_brl} "
             f"({total_ext}), de forma à vista na data de {data_pgto}, "
             f"conforme combinado entre as partes."
         )
-        return c61, ""
+        return _rt_bold(txt, _bold), ""
 
     if tipo == "cartao":
         n_parc    = payment.get("n_parcelas", "")
@@ -131,7 +150,7 @@ def build_clausula_6(payment: dict) -> tuple[str, str]:
         parc_ext  = valor_extenso(payment.get("valor_parcela", ""))
         n_ext     = _int_extenso(int(n_parc)) if n_parc.isdigit() else n_parc
         data_pgto = payment.get("data", "")
-        c61 = (
+        txt = (
             f"6.1. Pela prestação dos serviços descritos neste contrato, "
             f"O CONTRATANTE pagará à CONTRATADA o valor de {total_brl} "
             f"({total_ext}), podendo o pagamento ser realizado à vista ou "
@@ -139,7 +158,7 @@ def build_clausula_6(payment: dict) -> tuple[str, str]:
             f"parcelas de {val_parc} ({parc_ext}), na data de {data_pgto}, "
             f"conforme condições acordadas entre as partes."
         )
-        return c61, ""
+        return _rt_bold(txt, _bold), ""
 
     # boleto / PIX
     valor_entrada = payment.get("valor_entrada", "")
@@ -152,7 +171,7 @@ def build_clausula_6(payment: dict) -> tuple[str, str]:
     n_int         = int(n_parc) if str(n_parc).isdigit() else 0
     n_ext         = _int_extenso(n_int)
 
-    c61 = (
+    txt = (
         f"6.1 – Pela prestação dos serviços descritos neste contrato, "
         f"o CONTRATANTE pagará à CONTRATADA o valor de {total_brl} "
         f"({total_ext}), com entrada de {entrada_brl} ({entrada_ext}) "
@@ -161,20 +180,19 @@ def build_clausula_6(payment: dict) -> tuple[str, str]:
         f"datas subsequentes, conforme combinado entre as partes:"
     )
 
-    # Gera lista de parcelas
     base = _parse_date(data_entrada)
     linhas: list[str] = []
     for i in range(1, n_int + 1):
         parc_date = _add_months(base, i)
         linhas.append(f"• {i + 1}ª parcela: {parc_date.strftime('%d/%m/%Y')} – no valor de {val_parc} ({parc_ext})")
     if linhas:
-        c61 += "\n" + "\n".join(linhas)
+        txt += "\n" + "\n".join(linhas)
 
     c62 = (
         "6.2. O pagamento será realizado por PIX IDENTIFICADO NA CONTA "
         "BANCÁRIA DA CONTRATADA, com vencimento de cada mês."
     )
-    return c61, c62
+    return _rt_bold(txt, _bold), c62
 
 
 # ── Quadro Resumo ─────────────────────────────────────────────────────────────
@@ -212,7 +230,7 @@ def build_quadro_custos(payment: dict) -> dict:
 
 # ── Identificação do cliente (parágrafo padrão) ───────────────────────────────
 
-def build_bloco_cliente(client: dict) -> str:
+def build_bloco_cliente(client: dict) -> RichText:
     fem       = client.get("nacionalidade", "").lower().endswith("a")
     inscrito  = "inscrita"                if fem else "inscrito"
     residente = "residente e domiciliada" if fem else "residente e domiciliado"
@@ -227,24 +245,27 @@ def build_bloco_cliente(client: dict) -> str:
     end_parts = [p for p in [rua, bairro, comp] if p]
     endereco  = ", ".join(end_parts)
 
-    text = (
-        f"{client.get('nome', '')}, {client.get('nacionalidade', '')}, "
-        f"{client.get('estado_civil', '')}, {client.get('profissao', '')}, "
-        f"{inscrito} no CPF/MF sob o nº {client.get('cpf', '')}"
+    rt = RichText()
+    rt.add(client.get("nome", ""), bold=True)
+    rt.add(
+        f", {client.get('nacionalidade', '')}, {client.get('estado_civil', '')}, "
+        f"{client.get('profissao', '')}, {inscrito} no CPF/MF sob o nº {client.get('cpf', '')}"
     )
     rg = client.get("rg", "")
     if rg:
-        text += f", portador(a) da carteira de identidade nº {rg}"
+        rt.add(f", portador(a) da carteira de identidade nº {rg}")
     email = client.get("email", "")
     if email:
-        text += f", Email: {email}"
-    text += f", {residente} na {endereco}"
+        rt.add(f", Email: {email}")
+    rt.add(f", {residente} na {endereco}")
     if cidade and uf:
-        text += f", {cidade}/{uf}"
+        rt.add(f", {cidade}/{uf}")
     if cep:
-        text += f", CEP: {cep}"
-    text += ', doravante denominado "Contratante";'
-    return text
+        rt.add(f", CEP: {cep}")
+    rt.add(', doravante denominado ')
+    rt.add('"Contratante"', bold=True)
+    rt.add(';')
+    return rt
 
 
 # ── Data por extenso ──────────────────────────────────────────────────────────
@@ -371,13 +392,25 @@ TEMPLATE_KEYS = {
 }
 
 
+def _docx_to_pdf(docx_path: Path) -> Path:
+    """Converte DOCX para PDF e remove o DOCX."""
+    pdf_path = docx_path.with_suffix(".pdf")
+    try:
+        from docx2pdf import convert
+        convert(str(docx_path), str(pdf_path))
+        docx_path.unlink()
+        return pdf_path
+    except Exception:
+        return docx_path  # sem Word instalado: mantém o DOCX
+
+
 def fill_template(template_path: Path, context: dict, out_path: Path) -> Path:
-    """Preenche um template DOCX com docxtpl e salva."""
+    """Preenche um template DOCX com docxtpl, salva e converte para PDF."""
     tpl = DocxTemplate(str(template_path))
     tpl.render(context)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     tpl.save(str(out_path))
-    return out_path
+    return _docx_to_pdf(out_path)
 
 
 def generate_all(
