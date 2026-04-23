@@ -38,6 +38,17 @@ function fmtOnlyNum(v) {
   return v.replace(/\D/g, '')
 }
 
+// Formato CNJ: 0000000-00.0000.0.00.0000
+function fmtProcesso(v) {
+  const n = v.replace(/\D/g, '').slice(0, 20)
+  if (n.length <= 7)  return n
+  if (n.length <= 9)  return `${n.slice(0,7)}-${n.slice(7)}`
+  if (n.length <= 13) return `${n.slice(0,7)}-${n.slice(7,9)}.${n.slice(9)}`
+  if (n.length <= 14) return `${n.slice(0,7)}-${n.slice(7,9)}.${n.slice(9,13)}.${n.slice(13)}`
+  if (n.length <= 16) return `${n.slice(0,7)}-${n.slice(7,9)}.${n.slice(9,13)}.${n.slice(13,14)}.${n.slice(14)}`
+  return `${n.slice(0,7)}-${n.slice(7,9)}.${n.slice(9,13)}.${n.slice(13,14)}.${n.slice(14,16)}.${n.slice(16)}`
+}
+
 // ─── Valores iniciais ────────────────────────────────────────────────────────
 
 const EMPTY_CLIENT = {
@@ -275,8 +286,8 @@ function ProcessCard({ proc, idx, onChange, onRemove, canRemove }) {
               <div className="mt-3">
                 <Field label="Número do Processo">
                   <Input value={proc.numero_processo}
-                    onChange={e => f('numero_processo')(e.target.value)}
-                    placeholder="0000000-00.0000.0.00.0000" />
+                    onChange={e => f('numero_processo')(fmtProcesso(e.target.value))}
+                    placeholder="0000000-00.0000.0.00.0000" maxLength={25} />
                 </Field>
               </div>
             )}

@@ -58,6 +58,10 @@ export default function Settings() {
           <p><span className="font-semibold text-brand-dark">Versão:</span> 2.0</p>
           <p><span className="font-semibold text-brand-dark">Tecnologia:</span> Python + React + PyWebView</p>
         </div>
+        <div className="mt-4 pt-4 border-t border-amber-200/60 text-xs text-brand-muted">
+          Desenvolvido por <span className="font-semibold text-brand-dark">Paulo Ricardo</span> para{' '}
+          <span className="font-semibold text-brand-dark">Blindsafe Soluções Financeiras</span>
+        </div>
       </Card>
 
       <div className="flex justify-end">
