@@ -296,7 +296,7 @@ def build_bloco_hipo(client: dict) -> RichText:
 
 
 def build_bloco_procuracao(client: dict) -> RichText:
-    """Bloco do OUTORGANTE para a procuração — sem 'Contratante' no final."""
+    """Bloco do OUTORGANTE para a procuração — Tahoma 11pt."""
     fem       = client.get("nacionalidade", "").lower().endswith("a")
     inscrito  = "inscrita"                if fem else "inscrito"
     residente = "residente e domiciliada" if fem else "residente e domiciliado"
@@ -312,7 +312,7 @@ def build_bloco_procuracao(client: dict) -> RichText:
     end_parts = [p for p in [rua, bairro, comp] if p]
     endereco  = ", ".join(end_parts)
 
-    kw = dict(font=_RT_FONT, size=_RT_SIZE)
+    kw = dict(font="Tahoma", size=22)  # 11pt em meios-pontos
     rt = RichText()
     rt.add(client.get("nome", ""), bold=True, **kw)
     rt.add(
@@ -360,7 +360,7 @@ def build_bloco_procuracao_pj(client: dict, empresa: dict) -> RichText:
     cep     = client.get("cep", "")
     endereco = ", ".join(p for p in [rua, bairro, comp] if p)
 
-    kw = dict(font=_RT_FONT, size=_RT_SIZE)
+    kw = dict(font="Tahoma", size=22)  # 11pt em meios-pontos
     rt = RichText()
     rt.add(empresa.get("nome", ""), bold=True, **kw)
     rt.add(
