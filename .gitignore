@@ -10,6 +10,8 @@ frontend/dist/
 
 # App
 output/
+dist/
+build/
 local_config.json
 *.log
 

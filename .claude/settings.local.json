@@ -32,7 +32,11 @@
       "Bash(py -c ' *)",
       "Bash(git -C \"C:/Users/prpau/OneDrive/Desktop/Contrato-rápido/Contrato-automatico\" status)",
       "Bash(git -C \"C:/Users/prpau/OneDrive/Desktop/Contrato-rápido/Contrato-automatico\" add .claude/settings.local.json)",
-      "Bash(git -C C:/Users/prpau/OneDrive/Desktop/Contrato-rápido/Contrato-automatico commit -m ' *)"
+      "Bash(git -C C:/Users/prpau/OneDrive/Desktop/Contrato-rápido/Contrato-automatico commit -m ' *)",
+      "Bash(git -C \"C:/Users/prpau/OneDrive/Desktop/Contrato-rápido/Contrato-automatico\" add backend/document_generator.py frontend/src/components/ContractForm.jsx)",
+      "Bash(py -c \"import webview; print\\(webview.__version__\\)\")",
+      "Bash(py -m pip show pywebview)",
+      "Bash(py -m pip show pyinstaller)"
     ]
   }
 }

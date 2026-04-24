@@ -47,7 +47,13 @@ Retorne SOMENTE um objeto JSON válido, sem markdown, sem texto extra:
   "parcelas_abertas": "00",
   "parcelas_vencidas": "00",
   "numero_processo": "número ou vazio",
-  "existe_processo": "Sim ou Não"
+  "existe_processo": "Sim ou Não",
+  "veiculo_marca_modelo": "MARCA MODELO EM MAIÚSCULAS ou vazio",
+  "veiculo_ano": "AAAA ou vazio",
+  "veiculo_placa": "PLACA ou vazio",
+  "veiculo_cor": "COR EM MAIÚSCULAS ou vazio",
+  "veiculo_renavam": "número ou vazio",
+  "veiculo_obs": "observação sobre localização do veículo ou vazio"
 }}"""
 
 _ADDRESS_PROMPT = """\
@@ -388,6 +394,13 @@ def build_template_context(
         "parcelas_pagas":       client_data.get("parcelas_pagas", ""),
         "parcelas_abertas":     client_data.get("parcelas_abertas", ""),
         "parcelas_vencidas":    client_data.get("parcelas_vencidas", ""),
+        # ── Dados do veículo ──────────────────────────────────────
+        "veiculo_marca_modelo": client_data.get("veiculo_marca_modelo", ""),
+        "veiculo_ano":          client_data.get("veiculo_ano", ""),
+        "veiculo_placa":        client_data.get("veiculo_placa", ""),
+        "veiculo_cor":          client_data.get("veiculo_cor", ""),
+        "veiculo_renavam":      client_data.get("veiculo_renavam", ""),
+        "veiculo_obs":          client_data.get("veiculo_obs", ""),
         # ── Processo ──────────────────────────────────────────────
         "numero_processo":  num_proc,
         "existe_processo":  proc_text,

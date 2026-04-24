@@ -8,11 +8,15 @@ import sys
 import subprocess
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parent
-DIST_DIR = ROOT_DIR / "frontend" / "dist"
-INDEX    = DIST_DIR / "index.html"
+_FROZEN = getattr(sys, "frozen", False)
 
-# Garante que o backend seja importável
+# Quando empacotado: assets bundled ficam em sys._MEIPASS
+# Em desenvolvimento: tudo fica na raiz do projeto
+ASSETS_DIR = Path(sys._MEIPASS) if _FROZEN else Path(__file__).resolve().parent
+ROOT_DIR   = Path(sys.executable).parent if _FROZEN else Path(__file__).resolve().parent
+DIST_DIR   = ASSETS_DIR / "frontend" / "dist"
+INDEX      = DIST_DIR / "index.html"
+
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
@@ -20,7 +24,9 @@ from backend.api import BlindSafeAPI
 
 
 def build_frontend():
-    """Faz build do React se dist/ não existir."""
+    """Faz build do React se dist/ não existir (só em desenvolvimento)."""
+    if _FROZEN:
+        return
     if INDEX.exists():
         return
     print("Construindo interface (primeira execução)...")

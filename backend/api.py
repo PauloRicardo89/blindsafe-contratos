@@ -16,8 +16,13 @@ import tkinter as tk
 from backend.document_generator import generate_all
 
 # ── Caminhos base ─────────────────────────────────────────────────────────────
+# Quando empacotado pelo PyInstaller, arquivos graváveis ficam junto ao .exe
 
-ROOT_DIR      = Path(__file__).resolve().parent.parent
+ROOT_DIR      = (
+    Path(sys.executable).parent
+    if getattr(sys, "frozen", False)
+    else Path(__file__).resolve().parent.parent
+)
 TEMPLATES_DIR = ROOT_DIR / "templates"
 CONFIG_FILE   = ROOT_DIR / "local_config.json"
 
