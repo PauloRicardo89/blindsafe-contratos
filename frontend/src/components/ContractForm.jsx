@@ -71,6 +71,10 @@ const EMPTY_PROCESS = {
   existe_processo: 'nao', numero_processo: '',
 }
 
+const EMPTY_EMPRESA = {
+  nome: '', cnpj: '', rua: '', bairro: '', complemento: '', cidade: '', uf: '', cep: '',
+}
+
 const EMPTY_VEHICLE = {
   marca_modelo: '', ano: '', placa: '', cor: '', renavam: '',
   fora_endereco: true, observacao: '',
@@ -167,6 +171,7 @@ function ClientSection({ data, onChange }) {
             <option value="casado">Casado(a)</option>
             <option value="divorciado">Divorciado(a)</option>
             <option value="viuvo">Viúvo(a)</option>
+            <option value="separado">Separado(a) de fato</option>
             <option value="uniao_estavel">União Estável</option>
           </Select>
         </Field>
@@ -540,16 +545,74 @@ function PaymentSection({ data, onChange }) {
 
 // ─── Seção: Documentos ───────────────────────────────────────────────────────
 
-function DocsSection({ docs, onChange }) {
-  const toggle = (k) => onChange({ ...docs, [k]: !docs[k] })
+function DocsSection({ docs, empresa, onDocsChange, onEmpresaChange }) {
+  const toggle = (k) => onDocsChange({ ...docs, [k]: !docs[k] })
+  const fe = (k) => (v) => onEmpresaChange({ ...empresa, [k]: v })
+
   return (
     <Card className="p-6">
       <SectionTitle>Documentos a Gerar</SectionTitle>
-      <div className="flex gap-6">
+      <div className="flex gap-6 mb-4">
         <Checkbox label="Contrato"         checked={docs.contrato}   onChange={() => toggle('contrato')} />
         <Checkbox label="Procuração"       checked={docs.procuracao} onChange={() => toggle('procuracao')} />
         <Checkbox label="Hipossuficiência" checked={docs.hipo}       onChange={() => toggle('hipo')} />
       </div>
+
+      {docs.procuracao && (
+        <div className="border-t border-amber-200 pt-4 mt-2">
+          <label className="flex items-center gap-2 cursor-pointer select-none mb-4">
+            <input type="checkbox" checked={docs.procuracao_pj || false}
+              onChange={() => toggle('procuracao_pj')}
+              className="w-4 h-4" />
+            <span className="text-sm font-semibold text-brand-dark/80">Pessoa Jurídica (empresa como outorgante)</span>
+          </label>
+
+          {docs.procuracao_pj && (
+            <div className="grid grid-cols-2 gap-4 mt-2">
+              <Field label="Razão Social" required className="col-span-2">
+                <Input value={empresa.nome}
+                  onChange={e => fe('nome')(e.target.value.toUpperCase())}
+                  placeholder="NOME DA EMPRESA LTDA" />
+              </Field>
+              <Field label="CNPJ" required>
+                <Input value={empresa.cnpj}
+                  onChange={e => fe('cnpj')(e.target.value)}
+                  placeholder="00.000.000/0001-00" maxLength={18} />
+              </Field>
+              <Field label="CEP">
+                <Input value={empresa.cep}
+                  onChange={e => fe('cep')(e.target.value)}
+                  placeholder="00000-000" maxLength={9} />
+              </Field>
+              <Field label="Rua / Endereço" className="col-span-2">
+                <Input value={empresa.rua}
+                  onChange={e => fe('rua')(e.target.value.toUpperCase())}
+                  placeholder="RUA EXEMPLO, Nº 123" />
+              </Field>
+              <Field label="Bairro">
+                <Input value={empresa.bairro}
+                  onChange={e => fe('bairro')(e.target.value.toUpperCase())}
+                  placeholder="CENTRO" />
+              </Field>
+              <Field label="Complemento">
+                <Input value={empresa.complemento}
+                  onChange={e => fe('complemento')(e.target.value)}
+                  placeholder="Sala 1" />
+              </Field>
+              <Field label="Cidade">
+                <Input value={empresa.cidade}
+                  onChange={e => fe('cidade')(e.target.value.toUpperCase())}
+                  placeholder="CIDADE" />
+              </Field>
+              <Field label="UF">
+                <Input value={empresa.uf}
+                  onChange={e => fe('uf')(e.target.value.toUpperCase())}
+                  placeholder="RJ" maxLength={2} />
+              </Field>
+            </div>
+          )}
+        </div>
+      )}
     </Card>
   )
 }
@@ -562,7 +625,8 @@ export default function ContractForm() {
   const [processes, setProcesses]   = useState([{ ...EMPTY_PROCESS }])
   const [vehicle, setVehicle]       = useState({ ...EMPTY_VEHICLE })
   const [payment, setPayment]       = useState({ ...EMPTY_PAYMENT_BOLETO })
-  const [docs, setDocs]             = useState({ contrato: true, procuracao: true, hipo: false })
+  const [docs, setDocs]             = useState({ contrato: true, procuracao: true, hipo: false, procuracao_pj: false })
+  const [empresa, setEmpresa]       = useState({ ...EMPTY_EMPRESA })
   const [loading, setLoading]       = useState(false)
   const [result, setResult]         = useState(null)
 
@@ -582,6 +646,7 @@ export default function ContractForm() {
         client, contractType, processes,
         vehicle: contractType === 'veiculo' ? vehicle : null,
         payment, docs,
+        empresa: docs.procuracao && docs.procuracao_pj ? empresa : null,
       })
       setResult(res)
     } catch (e) {
@@ -598,7 +663,8 @@ export default function ContractForm() {
     setProcesses([{ ...EMPTY_PROCESS }])
     setVehicle({ ...EMPTY_VEHICLE })
     setPayment({ ...EMPTY_PAYMENT_BOLETO })
-    setDocs({ contrato: true, procuracao: true, hipo: false })
+    setDocs({ contrato: true, procuracao: true, hipo: false, procuracao_pj: false })
+    setEmpresa({ ...EMPTY_EMPRESA })
     setResult(null)
   }
 
@@ -639,7 +705,7 @@ export default function ContractForm() {
 
       <PaymentSection data={payment} onChange={setPayment} />
 
-      <DocsSection docs={docs} onChange={setDocs} />
+      <DocsSection docs={docs} empresa={empresa} onDocsChange={setDocs} onEmpresaChange={setEmpresa} />
 
       {result && (
         <Card className={`p-4 border-2 ${result.ok ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'}`}>

@@ -232,11 +232,36 @@ def build_quadro_custos(payment: dict) -> dict:
 
 # ── Identificação do cliente (parágrafo padrão) ───────────────────────────────
 
+# ── Estado civil com concordância de gênero ───────────────────────────────────
+
+_EC_MASC: dict[str, str] = {
+    "solteiro":      "solteiro",
+    "casado":        "casado",
+    "divorciado":    "divorciado",
+    "viuvo":         "viúvo",
+    "separado":      "separado de fato",
+    "uniao_estavel": "união estável",
+}
+_EC_FEM: dict[str, str] = {
+    "solteiro":      "solteira",
+    "casado":        "casada",
+    "divorciado":    "divorciada",
+    "viuvo":         "viúva",
+    "separado":      "separada de fato",
+    "uniao_estavel": "união estável",
+}
+
+def _ec_gendered(ec: str, fem: bool) -> str:
+    d = _EC_FEM if fem else _EC_MASC
+    return d.get(ec.lower().strip(), ec)
+
+
 def build_bloco_hipo(client: dict) -> RichText:
     """Bloco do cliente para a hipossuficiência — Tahoma 12pt, sem ponto final."""
     fem       = client.get("nacionalidade", "").lower().endswith("a")
     inscrito  = "inscrita"                if fem else "inscrito"
     residente = "residente e domiciliada" if fem else "residente e domiciliado"
+    ec        = _ec_gendered(client.get("estado_civil", ""), fem)
 
     rua    = client.get("rua", "")
     bairro = client.get("bairro", "")
@@ -252,7 +277,7 @@ def build_bloco_hipo(client: dict) -> RichText:
     rt = RichText()
     rt.add(client.get("nome", ""), bold=True, **kw)
     rt.add(
-        f", {client.get('nacionalidade', '')}, {client.get('estado_civil', '')}, "
+        f", {client.get('nacionalidade', '')}, {ec}, "
         f"{client.get('profissao', '')}, {inscrito} no CPF/MF sob o nº {client.get('cpf', '')}",
         **kw
     )
@@ -275,6 +300,7 @@ def build_bloco_procuracao(client: dict) -> RichText:
     fem       = client.get("nacionalidade", "").lower().endswith("a")
     inscrito  = "inscrita"                if fem else "inscrito"
     residente = "residente e domiciliada" if fem else "residente e domiciliado"
+    ec        = _ec_gendered(client.get("estado_civil", ""), fem)
 
     rua    = client.get("rua", "")
     bairro = client.get("bairro", "")
@@ -290,7 +316,66 @@ def build_bloco_procuracao(client: dict) -> RichText:
     rt = RichText()
     rt.add(client.get("nome", ""), bold=True, **kw)
     rt.add(
-        f", {client.get('nacionalidade', '')}, {client.get('estado_civil', '')}, "
+        f", {client.get('nacionalidade', '')}, {ec}, "
+        f"{client.get('profissao', '')}, {inscrito} no CPF/MF sob o nº {client.get('cpf', '')}",
+        **kw
+    )
+    rg = client.get("rg", "")
+    if rg:
+        rt.add(f", portador(a) da carteira de identidade nº {rg}", **kw)
+    email = client.get("email", "")
+    if email:
+        rt.add(f", Email: {email}", **kw)
+    rt.add(f", {residente} na {endereco}", **kw)
+    if cidade and uf:
+        rt.add(f", {cidade}/{uf}", **kw)
+    if cep:
+        rt.add(f", CEP: {cep}", **kw)
+    rt.add(".", **kw)
+    return rt
+
+
+def build_bloco_procuracao_pj(client: dict, empresa: dict) -> RichText:
+    """Bloco do OUTORGANTE PJ: empresa + representante (sócio)."""
+    fem       = client.get("nacionalidade", "").lower().endswith("a")
+    inscrito  = "inscrita" if fem else "inscrito"
+    residente = "residente e domiciliada" if fem else "residente e domiciliado"
+    ec        = _ec_gendered(client.get("estado_civil", ""), fem)
+
+    # Endereço da empresa
+    e_rua   = empresa.get("rua", "")
+    e_bairro = empresa.get("bairro", "")
+    e_comp  = empresa.get("complemento", "")
+    e_cidade = empresa.get("cidade", "")
+    e_uf    = empresa.get("uf", "")
+    e_cep   = empresa.get("cep", "")
+    e_end   = ", ".join(p for p in [e_rua, e_bairro, e_comp] if p)
+
+    # Endereço do sócio
+    rua     = client.get("rua", "")
+    bairro  = client.get("bairro", "")
+    comp    = client.get("complemento", "")
+    cidade  = client.get("cidade", "")
+    uf      = client.get("uf", "")
+    cep     = client.get("cep", "")
+    endereco = ", ".join(p for p in [rua, bairro, comp] if p)
+
+    kw = dict(font=_RT_FONT, size=_RT_SIZE)
+    rt = RichText()
+    rt.add(empresa.get("nome", ""), bold=True, **kw)
+    rt.add(
+        f", pessoa jurídica de direito privado, inscrita no CNPJ sob o nº "
+        f"{empresa.get('cnpj', '')}, com sede à {e_end}",
+        **kw
+    )
+    if e_cidade and e_uf:
+        rt.add(f", da cidade de {e_cidade}/{e_uf}", **kw)
+    if e_cep:
+        rt.add(f", CEP {e_cep}", **kw)
+    rt.add(", neste ato representada por seu sócio ", **kw)
+    rt.add(client.get("nome", ""), bold=True, **kw)
+    rt.add(
+        f", {client.get('nacionalidade', '')}, {ec}, "
         f"{client.get('profissao', '')}, {inscrito} no CPF/MF sob o nº {client.get('cpf', '')}",
         **kw
     )
@@ -313,6 +398,7 @@ def build_bloco_cliente(client: dict) -> RichText:
     fem       = client.get("nacionalidade", "").lower().endswith("a")
     inscrito  = "inscrita"                if fem else "inscrito"
     residente = "residente e domiciliada" if fem else "residente e domiciliado"
+    ec        = _ec_gendered(client.get("estado_civil", ""), fem)
 
     rua    = client.get("rua", "")
     bairro = client.get("bairro", "")
@@ -328,7 +414,7 @@ def build_bloco_cliente(client: dict) -> RichText:
     rt = RichText()
     rt.add(client.get("nome", ""), bold=True, **kw)
     rt.add(
-        f", {client.get('nacionalidade', '')}, {client.get('estado_civil', '')}, "
+        f", {client.get('nacionalidade', '')}, {ec}, "
         f"{client.get('profissao', '')}, {inscrito} no CPF/MF sob o nº {client.get('cpf', '')}",
         **kw
     )
@@ -377,6 +463,7 @@ def build_context(payload: dict) -> dict[str, Any]:
     processes    = payload.get("processes", [{}])
     vehicle      = payload.get("vehicle") or {}
     payment      = payload.get("payment", {})
+    empresa      = payload.get("empresa") or {}
 
     c61, c62 = build_clausula_6(payment)
     qr_custos = build_quadro_custos(payment)
@@ -431,7 +518,8 @@ def build_context(payload: dict) -> dict[str, Any]:
         "uf":             client.get("uf", ""),
         "cep":            client.get("cep", ""),
         "bloco_cliente":     build_bloco_cliente(client),
-        "bloco_procuracao":  build_bloco_procuracao(client),
+        "bloco_procuracao":     build_bloco_procuracao(client),
+        "bloco_procuracao_pj":  build_bloco_procuracao_pj(client, empresa),
         "bloco_hipo":        build_bloco_hipo(client),
         "local_data":        build_local_data(client.get("cidade", ""), client.get("uf", "")),
 
@@ -541,9 +629,11 @@ def generate_all(
 
     # Procuração
     if docs.get("procuracao"):
-        tpl_path = templates_dir / "procuracao.docx"
+        is_pj    = docs.get("procuracao_pj", False)
+        tpl_name = "procuracao_pj.docx" if is_pj else "procuracao.docx"
+        tpl_path = templates_dir / tpl_name
         if not tpl_path.exists():
-            raise FileNotFoundError("Template de Procuração não encontrado.")
+            raise FileNotFoundError(f"Template de Procuração {'PJ ' if is_pj else ''}não encontrado.")
         out = fill_template(tpl_path, context, out_folder / "Procuracao.docx")
         generated.append(out)
 
