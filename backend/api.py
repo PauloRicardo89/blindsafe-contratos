@@ -29,7 +29,7 @@ CONFIG_FILE   = ROOT_DIR / "local_config.json"
 TEMPLATE_KEYS = [
     "emprestimo", "veiculo", "fiscal",
     "condominio", "condominio_aluguel", "rural",
-    "procuracao", "hipo",
+    "procuracao", "procuracao_pj", "hipo",
 ]
 
 # ── Config ────────────────────────────────────────────────────────────────────
