@@ -38,6 +38,15 @@ function fmtOnlyNum(v) {
   return v.replace(/\D/g, '')
 }
 
+function fmtCNPJ(v) {
+  const n = v.replace(/\D/g, '').slice(0, 14)
+  if (n.length <= 2)  return n
+  if (n.length <= 5)  return `${n.slice(0,2)}.${n.slice(2)}`
+  if (n.length <= 8)  return `${n.slice(0,2)}.${n.slice(2,5)}.${n.slice(5)}`
+  if (n.length <= 12) return `${n.slice(0,2)}.${n.slice(2,5)}.${n.slice(5,8)}/${n.slice(8)}`
+  return `${n.slice(0,2)}.${n.slice(2,5)}.${n.slice(5,8)}/${n.slice(8,12)}-${n.slice(12)}`
+}
+
 function fmtDate(v) {
   const n = v.replace(/\D/g, '').slice(0, 8)
   if (n.length <= 2) return n
@@ -548,6 +557,8 @@ function PaymentSection({ data, onChange }) {
 function DocsSection({ docs, empresa, onDocsChange, onEmpresaChange }) {
   const toggle = (k) => onDocsChange({ ...docs, [k]: !docs[k] })
   const fe = (k) => (v) => onEmpresaChange({ ...empresa, [k]: v })
+  const [cepLoading, setCepLoading] = useState(false)
+  const [cepErro,    setCepErro]    = useState(false)
 
   return (
     <Card className="p-6">
@@ -568,47 +579,79 @@ function DocsSection({ docs, empresa, onDocsChange, onEmpresaChange }) {
           </label>
 
           {docs.procuracao_pj && (
-            <div className="grid grid-cols-2 gap-4 mt-2">
-              <Field label="Razão Social" required className="col-span-2">
-                <Input value={empresa.nome}
-                  onChange={e => fe('nome')(e.target.value.toUpperCase())}
-                  placeholder="NOME DA EMPRESA LTDA" />
-              </Field>
-              <Field label="CNPJ" required>
-                <Input value={empresa.cnpj}
-                  onChange={e => fe('cnpj')(e.target.value)}
-                  placeholder="00.000.000/0001-00" maxLength={18} />
-              </Field>
-              <Field label="CEP">
-                <Input value={empresa.cep}
-                  onChange={e => fe('cep')(e.target.value)}
-                  placeholder="00000-000" maxLength={9} />
-              </Field>
-              <Field label="Rua / Endereço" className="col-span-2">
-                <Input value={empresa.rua}
-                  onChange={e => fe('rua')(e.target.value.toUpperCase())}
-                  placeholder="RUA EXEMPLO, Nº 123" />
-              </Field>
-              <Field label="Bairro">
-                <Input value={empresa.bairro}
-                  onChange={e => fe('bairro')(e.target.value.toUpperCase())}
-                  placeholder="CENTRO" />
-              </Field>
-              <Field label="Complemento">
-                <Input value={empresa.complemento}
-                  onChange={e => fe('complemento')(e.target.value)}
-                  placeholder="Sala 1" />
-              </Field>
-              <Field label="Cidade">
-                <Input value={empresa.cidade}
-                  onChange={e => fe('cidade')(e.target.value.toUpperCase())}
-                  placeholder="CIDADE" />
-              </Field>
-              <Field label="UF">
-                <Input value={empresa.uf}
-                  onChange={e => fe('uf')(e.target.value.toUpperCase())}
-                  placeholder="RJ" maxLength={2} />
-              </Field>
+            <div className="mt-2">
+              <p className="text-xs font-bold text-brand-dark/50 uppercase tracking-wider mb-3">Dados da Empresa</p>
+              <div className="grid grid-cols-2 gap-4">
+
+                <Field label="Razão Social" required>
+                  <Input value={empresa.nome}
+                    onChange={e => fe('nome')(e.target.value.toUpperCase())}
+                    placeholder="NOME DA EMPRESA LTDA" />
+                </Field>
+
+                <Field label="CNPJ" required>
+                  <Input value={empresa.cnpj}
+                    onChange={e => fe('cnpj')(fmtCNPJ(e.target.value))}
+                    placeholder="00.000.000/0001-00" maxLength={18} />
+                </Field>
+
+                <Field label="Rua / Av. + Número">
+                  <Input value={empresa.rua}
+                    onChange={e => fe('rua')(e.target.value.toUpperCase())}
+                    placeholder="RUA EXEMPLO, Nº 123" />
+                </Field>
+
+                <Field label="Bairro">
+                  <Input value={empresa.bairro}
+                    onChange={e => fe('bairro')(e.target.value.toUpperCase())}
+                    placeholder="CENTRO" />
+                </Field>
+
+                <Field label="Complemento">
+                  <Input value={empresa.complemento}
+                    onChange={e => fe('complemento')(e.target.value.toUpperCase())}
+                    placeholder="Sala 1" />
+                </Field>
+
+                <Field label="Cidade">
+                  <Input value={empresa.cidade}
+                    onChange={e => fe('cidade')(e.target.value.toUpperCase())}
+                    placeholder="NOME DA CIDADE" />
+                </Field>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="UF">
+                    <Select value={empresa.uf} onChange={e => fe('uf')(e.target.value)}>
+                      <option value="">--</option>
+                      {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                    </Select>
+                  </Field>
+                  <Field label="CEP" error={cepErro ? 'CEP não encontrado' : undefined}>
+                    <div className="relative">
+                      <Input value={empresa.cep}
+                        onChange={e => {
+                          const fmt     = fmtCEP(e.target.value)
+                          const updated = { ...empresa, cep: fmt }
+                          onEmpresaChange(updated)
+                          setCepErro(false)
+                          if (fmt.length === 9) buscarCEP(fmt, updated, onEmpresaChange, setCepLoading, setCepErro)
+                        }}
+                        placeholder="00000-000" maxLength={9} disabled={cepLoading}
+                        className={cepLoading ? 'pr-8' : ''} />
+                      {cepLoading && (
+                        <Loader size={14} className="animate-spin absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-muted" />
+                      )}
+                    </div>
+                  </Field>
+                </div>
+
+                <div className="flex items-center col-span-2">
+                  <p className="text-xs text-brand-muted italic leading-relaxed">
+                    Preencha o CEP e os campos de endereço serão completados automaticamente.
+                  </p>
+                </div>
+
+              </div>
             </div>
           )}
         </div>
