@@ -22,7 +22,17 @@
       "Bash(pandoc \"C:\\\\Users\\\\prpau\\\\OneDrive\\\\Desktop\\\\contrato-blindsafe\\\\Procuração e Hipo\\\\Procuração Luis e Leo.docx\" -o /tmp/procuracao.md)",
       "Read(//tmp/**)",
       "Bash(python scripts/office/unpack.py \"C:\\\\Users\\\\prpau\\\\OneDrive\\\\Desktop\\\\contrato-blindsafe\\\\Procuração e Hipo\\\\Procuração Luis e Leo.docx\" /tmp/procuracao_unpacked/)",
-      "Bash(py -3.13 -c ' *)"
+      "Bash(py -3.13 -c ' *)",
+      "Read(//c/Users/prpau/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/c8a44511-81b3-4e2c-9fbe-2a8a6771689f/954c416f-dba6-49a2-a422-17204ac131f4/skills/docx/**)",
+      "Bash(python scripts/office/unpack.py \"C:\\\\Users\\\\prpau\\\\OneDrive\\\\Desktop\\\\contrato-blindsafe\\\\CPS VEICULOS BLINDSAFE \\(1\\).docx\" unpacked_blindsafe/)",
+      "Bash(python3 -m pip install defusedxml)",
+      "Bash(py -m pip install defusedxml)",
+      "PowerShell(py -m pip install defusedxml 2>&1)",
+      "Bash(py scripts/office/unpack.py \"C:\\\\Users\\\\prpau\\\\OneDrive\\\\Desktop\\\\contrato-blindsafe\\\\CPS VEICULOS BLINDSAFE \\(1\\).docx\" unpacked_blindsafe/)",
+      "Bash(py -c ' *)",
+      "Bash(git -C \"C:/Users/prpau/OneDrive/Desktop/Contrato-rápido/Contrato-automatico\" status)",
+      "Bash(git -C \"C:/Users/prpau/OneDrive/Desktop/Contrato-rápido/Contrato-automatico\" add .claude/settings.local.json)",
+      "Bash(git -C C:/Users/prpau/OneDrive/Desktop/Contrato-rápido/Contrato-automatico commit -m ' *)"
     ]
   }
 }
