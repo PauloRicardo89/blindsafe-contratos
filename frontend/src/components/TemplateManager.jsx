@@ -9,7 +9,8 @@ const TEMPLATE_LABELS = {
   'condominio':         'Condomínio',
   'condominio_aluguel': 'Condomínio + Aluguel',
   'rural':              'Rural / Agro',
-  'procuracao':         'Procuração',
+  'procuracao':         'Procuração (PF)',
+  'procuracao_pj':      'Procuração (PJ)',
   'hipo':               'Hipossuficiência',
 }
 
@@ -110,7 +111,7 @@ export default function TemplateManager() {
           <p className="text-sm text-brand-muted">Carregando...</p>
         ) : (
           <div className="space-y-2">
-            {['procuracao','hipo'].map(key => {
+            {['procuracao','procuracao_pj','hipo'].map(key => {
               const tpl = templates[key] || {}
               return (
                 <div key={key} className="flex items-center justify-between py-3 px-4 rounded-lg bg-brand-bg">
