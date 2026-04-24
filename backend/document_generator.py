@@ -16,10 +16,12 @@ from docxtpl import DocxTemplate, RichText
 
 # ── RichText helpers ─────────────────────────────────────────────────────────
 
-_BOLD_6 = {'CONTRATANTE', 'CONTRATADA'}
+_BOLD_6   = {'CONTRATANTE', 'CONTRATADA'}
+_RT_FONT  = 'Arial'
+_RT_SIZE  = 20  # meios-pontos → 10pt
 
 def _rt_bold(text: str, bold_words: set) -> RichText:
-    """Cria RichText com as palavras indicadas em negrito."""
+    """Cria RichText com as palavras indicadas em negrito, fonte e tamanho fixos."""
     rt = RichText()
     pattern = '(' + '|'.join(re.escape(w) for w in sorted(bold_words, key=len, reverse=True)) + ')'
     for i, line in enumerate(text.split('\n')):
@@ -27,7 +29,7 @@ def _rt_bold(text: str, bold_words: set) -> RichText:
             rt.add('\n')
         for part in re.split(pattern, line):
             if part:
-                rt.add(part, bold=(part in bold_words))
+                rt.add(part, bold=(part in bold_words), font=_RT_FONT, size=_RT_SIZE)
     return rt
 
 # ── Meses em português ────────────────────────────────────────────────────────
@@ -245,26 +247,28 @@ def build_bloco_cliente(client: dict) -> RichText:
     end_parts = [p for p in [rua, bairro, comp] if p]
     endereco  = ", ".join(end_parts)
 
+    kw = dict(font=_RT_FONT, size=_RT_SIZE)
     rt = RichText()
-    rt.add(client.get("nome", ""), bold=True)
+    rt.add(client.get("nome", ""), bold=True, **kw)
     rt.add(
         f", {client.get('nacionalidade', '')}, {client.get('estado_civil', '')}, "
-        f"{client.get('profissao', '')}, {inscrito} no CPF/MF sob o nº {client.get('cpf', '')}"
+        f"{client.get('profissao', '')}, {inscrito} no CPF/MF sob o nº {client.get('cpf', '')}",
+        **kw
     )
     rg = client.get("rg", "")
     if rg:
-        rt.add(f", portador(a) da carteira de identidade nº {rg}")
+        rt.add(f", portador(a) da carteira de identidade nº {rg}", **kw)
     email = client.get("email", "")
     if email:
-        rt.add(f", Email: {email}")
-    rt.add(f", {residente} na {endereco}")
+        rt.add(f", Email: {email}", **kw)
+    rt.add(f", {residente} na {endereco}", **kw)
     if cidade and uf:
-        rt.add(f", {cidade}/{uf}")
+        rt.add(f", {cidade}/{uf}", **kw)
     if cep:
-        rt.add(f", CEP: {cep}")
-    rt.add(', doravante denominado ')
-    rt.add('"Contratante"', bold=True)
-    rt.add(';')
+        rt.add(f", CEP: {cep}", **kw)
+    rt.add(', doravante denominado ', **kw)
+    rt.add('"Contratante"', bold=True, **kw)
+    rt.add(';', **kw)
     return rt
 
 
