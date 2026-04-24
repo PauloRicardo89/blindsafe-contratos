@@ -15,7 +15,10 @@
       "Bash(npx tailwindcss *)",
       "Bash(/c/Users/prpau/AppData/Local/Programs/Python/Python313/python -m pip install pywebview docxtpl)",
       "Bash(npm run *)",
-      "Bash(git -C \"C:/Users/prpau/OneDrive/Desktop/Contrato-rápido/Contrato-automatico\" log --oneline)"
+      "Bash(git -C \"C:/Users/prpau/OneDrive/Desktop/Contrato-rápido/Contrato-automatico\" log --oneline)",
+      "Bash(C:\\\\Users\\\\prpau\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe -c \"import docx2pdf; print\\('ok'\\)\")",
+      "Bash(py -3.13 -c \"import docx2pdf; print\\('ok'\\)\")",
+      "Bash(py -3.13 -m pip install docx2pdf)"
     ]
   }
 }
