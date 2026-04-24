@@ -232,6 +232,44 @@ def build_quadro_custos(payment: dict) -> dict:
 
 # ── Identificação do cliente (parágrafo padrão) ───────────────────────────────
 
+def build_bloco_hipo(client: dict) -> RichText:
+    """Bloco do cliente para a hipossuficiência — Tahoma 12pt, sem ponto final."""
+    fem       = client.get("nacionalidade", "").lower().endswith("a")
+    inscrito  = "inscrita"                if fem else "inscrito"
+    residente = "residente e domiciliada" if fem else "residente e domiciliado"
+
+    rua    = client.get("rua", "")
+    bairro = client.get("bairro", "")
+    comp   = client.get("complemento", "")
+    cidade = client.get("cidade", "")
+    uf     = client.get("uf", "")
+    cep    = client.get("cep", "")
+
+    end_parts = [p for p in [rua, bairro, comp] if p]
+    endereco  = ", ".join(end_parts)
+
+    kw = dict(font="Tahoma", size=24)  # 12pt em meios-pontos
+    rt = RichText()
+    rt.add(client.get("nome", ""), bold=True, **kw)
+    rt.add(
+        f", {client.get('nacionalidade', '')}, {client.get('estado_civil', '')}, "
+        f"{client.get('profissao', '')}, {inscrito} no CPF/MF sob o nº {client.get('cpf', '')}",
+        **kw
+    )
+    rg = client.get("rg", "")
+    if rg:
+        rt.add(f", portador(a) da carteira de identidade nº {rg}", **kw)
+    email = client.get("email", "")
+    if email:
+        rt.add(f", Email: {email}", **kw)
+    rt.add(f", {residente} na {endereco}", **kw)
+    if cidade and uf:
+        rt.add(f", {cidade}/{uf}", **kw)
+    if cep:
+        rt.add(f", CEP: {cep}", **kw)
+    return rt
+
+
 def build_bloco_procuracao(client: dict) -> RichText:
     """Bloco do OUTORGANTE para a procuração — sem 'Contratante' no final."""
     fem       = client.get("nacionalidade", "").lower().endswith("a")
@@ -382,6 +420,7 @@ def build_context(payload: dict) -> dict[str, Any]:
         "cep":            client.get("cep", ""),
         "bloco_cliente":     build_bloco_cliente(client),
         "bloco_procuracao":  build_bloco_procuracao(client),
+        "bloco_hipo":        build_bloco_hipo(client),
         "local_data":        build_local_data(client.get("cidade", ""), client.get("uf", "")),
 
         # Processo 1 (atalho)
