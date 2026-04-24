@@ -38,6 +38,13 @@ function fmtOnlyNum(v) {
   return v.replace(/\D/g, '')
 }
 
+function fmtDate(v) {
+  const n = v.replace(/\D/g, '').slice(0, 8)
+  if (n.length <= 2) return n
+  if (n.length <= 4) return `${n.slice(0,2)}/${n.slice(2)}`
+  return `${n.slice(0,2)}/${n.slice(2,4)}/${n.slice(4)}`
+}
+
 // Formato CNJ: 0000000-00.0000.0.00.0000
 function fmtProcesso(v) {
   const n = v.replace(/\D/g, '').slice(0, 20)
@@ -463,7 +470,7 @@ function PaymentSection({ data, onChange }) {
           </Field>
           <Field label="Data da Entrada" required hint="As demais parcelas são geradas automaticamente">
             <Input value={data.data_entrada}
-              onChange={e => f('data_entrada')(e.target.value)}
+              onChange={e => f('data_entrada')(fmtDate(e.target.value))}
               placeholder="24/04/2026" maxLength={10} />
           </Field>
           <Field label="Nº de Parcelas Restantes" required hint="Não conta a entrada">
@@ -498,7 +505,7 @@ function PaymentSection({ data, onChange }) {
           </Field>
           <Field label="Data do Pagamento" required>
             <Input value={data.data}
-              onChange={e => f('data')(e.target.value)}
+              onChange={e => f('data')(fmtDate(e.target.value))}
               placeholder="11/05/2026" maxLength={10} />
           </Field>
         </div>
@@ -513,7 +520,7 @@ function PaymentSection({ data, onChange }) {
           </Field>
           <Field label="Data do Pagamento" required>
             <Input value={data.data}
-              onChange={e => f('data')(e.target.value)}
+              onChange={e => f('data')(fmtDate(e.target.value))}
               placeholder="23/04/2026" maxLength={10} />
           </Field>
         </div>

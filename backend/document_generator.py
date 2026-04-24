@@ -445,7 +445,7 @@ def generate_all(
         tpl_path = templates_dir / f"{key}.docx"
         if not tpl_path.exists():
             raise FileNotFoundError(f"Template não encontrado: {tpl_path.name}\nAdicione-o na tela de Templates.")
-        out = fill_template(tpl_path, context, out_folder / "Contrato.docx")
+        out = fill_template(tpl_path, context, out_folder / f"Contrato - {safe_name}.docx")
         generated.append(out)
 
     # Procuração
