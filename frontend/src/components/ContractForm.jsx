@@ -72,7 +72,8 @@ const EMPTY_PROCESS = {
 }
 
 const EMPTY_VEHICLE = {
-  marca_modelo: '', ano: '', placa: '', cor: '', renavam: '', observacao: '',
+  marca_modelo: '', ano: '', placa: '', cor: '', renavam: '',
+  fora_endereco: true, observacao: '',
 }
 
 const EMPTY_PAYMENT_BOLETO = {
@@ -415,10 +416,18 @@ function VehicleSection({ data, onChange }) {
             onChange={e => f('renavam')(fmtOnlyNum(e.target.value))}
             placeholder="1019855522" />
         </Field>
-        <Field label="Observação" className="col-span-2">
+        <Field className="col-span-2">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" checked={data.fora_endereco}
+              onChange={e => f('fora_endereco')(e.target.checked)}
+              className="w-4 h-4" />
+            <span className="text-sm">O veículo não está localizado no mesmo endereço do carnê de financiamento</span>
+          </label>
+        </Field>
+        <Field label="Observação adicional" className="col-span-2">
           <Input value={data.observacao}
             onChange={e => f('observacao')(e.target.value)}
-            placeholder="ex: veículo não está no mesmo endereço do carnê" />
+            placeholder="Outras observações sobre o veículo (opcional)" />
         </Field>
       </div>
     </Card>

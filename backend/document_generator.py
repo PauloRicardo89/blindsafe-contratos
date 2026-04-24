@@ -357,6 +357,18 @@ def build_local_data(cidade: str, uf: str = "") -> str:
     return f"{loc}, {today.day:02d} de {_MESES[today.month]} de {today.year}."
 
 
+_OBS_FORA_ENDERECO = "O VEÍCULO NÃO ESTÁ LOCALIZADO NO MESMO ENDEREÇO DO CARNÊ DE FINANCIAMENTO"
+
+def _build_veiculo_obs(vehicle: dict) -> str:
+    parts = []
+    if vehicle.get("fora_endereco", False):
+        parts.append(_OBS_FORA_ENDERECO)
+    extra = vehicle.get("observacao", "").strip()
+    if extra:
+        parts.append(extra)
+    return " - ".join(parts)
+
+
 # ── Contexto completo do template ─────────────────────────────────────────────
 
 def build_context(payload: dict) -> dict[str, Any]:
@@ -451,7 +463,7 @@ def build_context(payload: dict) -> dict[str, Any]:
         "veiculo_placa":        vehicle.get("placa", ""),
         "veiculo_cor":          vehicle.get("cor", ""),
         "veiculo_renavam":      vehicle.get("renavam", ""),
-        "veiculo_obs":          vehicle.get("observacao", ""),
+        "veiculo_obs":          _build_veiculo_obs(vehicle),
 
         # Tipo do contrato
         "tipo_contrato": contract_type,
