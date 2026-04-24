@@ -670,6 +670,7 @@ export default function ContractForm() {
   const [payment, setPayment]       = useState({ ...EMPTY_PAYMENT_BOLETO })
   const [docs, setDocs]             = useState({ contrato: true, procuracao: true, hipo: false, procuracao_pj: false })
   const [empresa, setEmpresa]       = useState({ ...EMPTY_EMPRESA })
+  const [formato, setFormato]       = useState('pdf')
   const [loading, setLoading]       = useState(false)
   const [result, setResult]         = useState(null)
 
@@ -688,7 +689,7 @@ export default function ContractForm() {
       const res = await pyapi('generate_documents', {
         client, contractType, processes,
         vehicle: contractType === 'veiculo' ? vehicle : null,
-        payment, docs,
+        payment, docs, formato,
         empresa: docs.procuracao && docs.procuracao_pj ? empresa : null,
       })
       setResult(res)
@@ -708,6 +709,7 @@ export default function ContractForm() {
     setPayment({ ...EMPTY_PAYMENT_BOLETO })
     setDocs({ contrato: true, procuracao: true, hipo: false, procuracao_pj: false })
     setEmpresa({ ...EMPTY_EMPRESA })
+    setFormato('pdf')
     setResult(null)
   }
 
@@ -749,6 +751,26 @@ export default function ContractForm() {
       <PaymentSection data={payment} onChange={setPayment} />
 
       <DocsSection docs={docs} empresa={empresa} onDocsChange={setDocs} onEmpresaChange={setEmpresa} />
+
+      {/* Formato de saída */}
+      <Card className="p-6">
+        <SectionTitle>Formato dos Documentos</SectionTitle>
+        <div className="flex gap-3">
+          {[
+            { value: 'pdf',  label: 'PDF' },
+            { value: 'docx', label: 'Word (.docx)' },
+          ].map(({ value, label }) => (
+            <button key={value} onClick={() => setFormato(value)}
+              className={`py-2.5 px-6 rounded-lg text-sm font-medium border-2 transition-all ${
+                formato === value
+                  ? 'bg-brand-dark border-brand-dark text-white'
+                  : 'bg-white border-amber-200 text-brand-muted hover:border-brand-dark'
+              }`}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </Card>
 
       {result && (
         <Card className={`p-4 border-2 ${result.ok ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'}`}>

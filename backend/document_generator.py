@@ -587,13 +587,13 @@ def _docx_to_pdf(docx_path: Path) -> Path:
         return docx_path  # sem Word instalado: mantém o DOCX
 
 
-def fill_template(template_path: Path, context: dict, out_path: Path) -> Path:
-    """Preenche um template DOCX com docxtpl, salva e converte para PDF."""
+def fill_template(template_path: Path, context: dict, out_path: Path, to_pdf: bool = True) -> Path:
+    """Preenche um template DOCX com docxtpl, salva e opcionalmente converte para PDF."""
     tpl = DocxTemplate(str(template_path))
     tpl.render(context)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     tpl.save(str(out_path))
-    return _docx_to_pdf(out_path)
+    return _docx_to_pdf(out_path) if to_pdf else out_path
 
 
 def generate_all(
@@ -609,6 +609,7 @@ def generate_all(
     docs         = payload.get("docs", {})
     contract_type = payload.get("contractType", "emprestimo")
     client_name  = payload.get("client", {}).get("nome", "cliente").title()
+    to_pdf       = payload.get("formato", "pdf") == "pdf"
 
     # Pasta de saída: output_dir / nome_cliente_data
     today_str = date.today().strftime("%Y%m%d")
@@ -624,7 +625,7 @@ def generate_all(
         tpl_path = templates_dir / f"{key}.docx"
         if not tpl_path.exists():
             raise FileNotFoundError(f"Template não encontrado: {tpl_path.name}\nAdicione-o na tela de Templates.")
-        out = fill_template(tpl_path, context, out_folder / f"Contrato - {safe_name}.docx")
+        out = fill_template(tpl_path, context, out_folder / f"Contrato - {safe_name}.docx", to_pdf)
         generated.append(out)
 
     # Procuração
@@ -634,7 +635,7 @@ def generate_all(
         tpl_path = templates_dir / tpl_name
         if not tpl_path.exists():
             raise FileNotFoundError(f"Template de Procuração {'PJ ' if is_pj else ''}não encontrado.")
-        out = fill_template(tpl_path, context, out_folder / "Procuracao.docx")
+        out = fill_template(tpl_path, context, out_folder / "Procuracao.docx", to_pdf)
         generated.append(out)
 
     # Hipossuficiência
@@ -642,7 +643,7 @@ def generate_all(
         tpl_path = templates_dir / "hipo.docx"
         if not tpl_path.exists():
             raise FileNotFoundError("Template de Hipossuficiência não encontrado.")
-        out = fill_template(tpl_path, context, out_folder / "Hipossuficiencia.docx")
+        out = fill_template(tpl_path, context, out_folder / "Hipossuficiencia.docx", to_pdf)
         generated.append(out)
 
     return generated, out_folder
