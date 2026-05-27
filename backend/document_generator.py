@@ -435,6 +435,65 @@ def build_bloco_cliente(client: dict) -> RichText:
     return rt
 
 
+def build_bloco_cliente_pj(client: dict, empresa: dict) -> RichText:
+    """Bloco do CONTRATANTE PJ para o contrato — Arial 10pt."""
+    fem       = client.get("nacionalidade", "").lower().endswith("a")
+    inscrito  = "inscrita" if fem else "inscrito"
+    residente = "residente e domiciliada" if fem else "residente e domiciliado"
+    ec        = _ec_gendered(client.get("estado_civil", ""), fem)
+
+    e_rua    = empresa.get("rua", "")
+    e_bairro = empresa.get("bairro", "")
+    e_comp   = empresa.get("complemento", "")
+    e_cidade = empresa.get("cidade", "")
+    e_uf     = empresa.get("uf", "")
+    e_cep    = empresa.get("cep", "")
+    e_end    = ", ".join(p for p in [e_rua, e_bairro, e_comp] if p)
+
+    rua      = client.get("rua", "")
+    bairro   = client.get("bairro", "")
+    comp     = client.get("complemento", "")
+    cidade   = client.get("cidade", "")
+    uf       = client.get("uf", "")
+    cep      = client.get("cep", "")
+    endereco = ", ".join(p for p in [rua, bairro, comp] if p)
+
+    kw = dict(font=_RT_FONT, size=_RT_SIZE)
+    rt = RichText()
+    rt.add(empresa.get("nome", ""), bold=True, **kw)
+    rt.add(
+        f", pessoa jurídica de direito privado, inscrita no CNPJ sob o nº "
+        f"{empresa.get('cnpj', '')}, com sede à {e_end}",
+        **kw
+    )
+    if e_cidade and e_uf:
+        rt.add(f", da cidade de {e_cidade}/{e_uf}", **kw)
+    if e_cep:
+        rt.add(f", CEP {e_cep}", **kw)
+    rt.add(", neste ato representada por seu sócio ", **kw)
+    rt.add(client.get("nome", ""), bold=True, **kw)
+    rt.add(
+        f", {client.get('nacionalidade', '')}, {ec}, "
+        f"{client.get('profissao', '')}, {inscrito} no CPF/MF sob o nº {client.get('cpf', '')}",
+        **kw
+    )
+    rg = client.get("rg", "")
+    if rg:
+        rt.add(f", portador(a) da carteira de identidade nº {rg}", **kw)
+    email = client.get("email", "")
+    if email:
+        rt.add(f", Email: {email}", **kw)
+    rt.add(f", {residente} na {endereco}", **kw)
+    if cidade and uf:
+        rt.add(f", {cidade}/{uf}", **kw)
+    if cep:
+        rt.add(f", CEP: {cep}", **kw)
+    rt.add(', doravante denominado ', **kw)
+    rt.add('"Contratante"', bold=True, **kw)
+    rt.add(';', **kw)
+    return rt
+
+
 # ── Data por extenso ──────────────────────────────────────────────────────────
 
 def build_local_data(cidade: str, uf: str = "") -> str:
@@ -607,6 +666,13 @@ def generate_all(
     """
     context      = build_context(payload)
     docs         = payload.get("docs", {})
+
+    # Quando PJ, substitui bloco_cliente pela versão jurídica no contrato
+    if docs.get("procuracao_pj", False):
+        client  = payload.get("client", {})
+        empresa = payload.get("empresa") or {}
+        context["bloco_cliente"] = build_bloco_cliente_pj(client, empresa)
+
     contract_type = payload.get("contractType", "emprestimo")
     client_name  = payload.get("client", {}).get("nome", "cliente").title()
     to_pdf       = payload.get("formato", "pdf") == "pdf"
