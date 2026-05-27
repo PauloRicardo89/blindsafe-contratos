@@ -36,7 +36,7 @@ export default function Sidebar({ activePage, onNavigate }) {
       </nav>
 
       <div className="px-5 py-4 border-t border-white/10">
-        <p className="text-white/25 text-xs">v2.0</p>
+        <p className="text-white/25 text-xs">v3.0</p>
       </div>
     </aside>
   )
