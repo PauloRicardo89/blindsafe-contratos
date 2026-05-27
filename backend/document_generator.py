@@ -866,3 +866,53 @@ def generate_all(
         generated.append(out)
 
     return generated, out_folder
+
+
+def generate_contrato_veiculo(
+    payload: dict,
+    templates_dir: Path,
+    output_dir: Path,
+) -> tuple[Path, Path]:
+    """Gera o Contrato de Compra de Veículo. Retorna (arquivo_gerado, pasta_saída)."""
+    tpl_path = templates_dir / "contrato_veiculo.docx"
+    if not tpl_path.exists():
+        raise FileNotFoundError("Template contrato_veiculo.docx não encontrado.")
+
+    nome    = payload.get("nome", "").upper()
+    cidade  = payload.get("cidade", "Rio de Janeiro")
+    uf      = payload.get("uf", "RJ")
+    to_pdf  = payload.get("formato", "pdf") == "pdf"
+
+    # Endereço completo em uma linha
+    parts = [
+        payload.get("rua", ""),
+        payload.get("bairro", ""),
+        payload.get("complemento", ""),
+        f'{cidade}/{uf}',
+        f'CEP: {payload.get("cep", "")}',
+    ]
+    endereco_completo = ", ".join(p for p in parts if p.strip())
+
+    context = {
+        "nome":               nome,
+        "nacionalidade":      payload.get("nacionalidade", ""),
+        "rg":                 payload.get("rg", ""),
+        "cpf":                payload.get("cpf", ""),
+        "endereco_completo":  endereco_completo,
+        "email":              payload.get("email", ""),
+        "veiculo_modelo":     payload.get("veiculo_modelo", "").upper(),
+        "veiculo_ano":        payload.get("veiculo_ano", ""),
+        "veiculo_cor":        payload.get("veiculo_cor", "").upper(),
+        "veiculo_chassi":     payload.get("veiculo_chassi", "").upper(),
+        "veiculo_placa":      payload.get("veiculo_placa", "").upper(),
+        "veiculo_renavam":    payload.get("veiculo_renavam", ""),
+        "local_data":         build_local_data(cidade, uf),
+    }
+
+    today_str = date.today().strftime("%Y%m%d")
+    safe_name = "".join(c for c in nome.title() if c.isalnum() or c in " _-").strip()[:40]
+    out_folder = output_dir / f"{safe_name} {today_str}"
+    out_folder.mkdir(parents=True, exist_ok=True)
+
+    out = fill_template(tpl_path, context, out_folder / "Contrato Veiculo.docx", to_pdf)
+    return out, out_folder

@@ -7,7 +7,8 @@ a = Analysis(
     binaries=[],
     datas=[
         ('frontend/dist',              'frontend/dist'),
-        ('templates/proposta.pptx',    'templates'),
+        ('templates/proposta.pptx',       'templates'),
+        ('templates/contrato_veiculo.docx', 'templates'),
     ],
     hiddenimports=[
         'webview.platforms.winforms',
