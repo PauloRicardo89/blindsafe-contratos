@@ -16,8 +16,7 @@ a = Analysis(
         ('templates/hipo.docx',             'templates'),
     ],
     hiddenimports=[
-        'webview.platforms.winforms',
-        'clr',
+        'webview.platforms.edgechromium',
         'backend.api',
         'backend.document_generator',
         'pptx',
