@@ -11,6 +11,9 @@ a = Analysis(
         ('templates/contrato_veiculo.docx', 'templates'),
         ('templates/procuracao.docx',       'templates'),
         ('templates/procuracao_pj.docx',    'templates'),
+        ('templates/emprestimo.docx',       'templates'),
+        ('templates/veiculo.docx',          'templates'),
+        ('templates/hipo.docx',             'templates'),
     ],
     hiddenimports=[
         'webview.platforms.winforms',

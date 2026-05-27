@@ -16,14 +16,19 @@ import tkinter as tk
 from backend.document_generator import generate_all, generate_proposta, generate_contrato_veiculo
 
 # ── Caminhos base ─────────────────────────────────────────────────────────────
-# Quando empacotado pelo PyInstaller, arquivos graváveis ficam junto ao .exe
+# ROOT_DIR = pasta do .exe (para config e output)
+# TEMPLATES_DIR = pasta _internal/templates quando frozen (PyInstaller v6+)
 
 ROOT_DIR      = (
     Path(sys.executable).parent
     if getattr(sys, "frozen", False)
     else Path(__file__).resolve().parent.parent
 )
-TEMPLATES_DIR = ROOT_DIR / "templates"
+TEMPLATES_DIR = (
+    Path(sys._MEIPASS) / "templates"
+    if getattr(sys, "frozen", False)
+    else ROOT_DIR / "templates"
+)
 CONFIG_FILE   = ROOT_DIR / "local_config.json"
 
 TEMPLATE_KEYS = [
