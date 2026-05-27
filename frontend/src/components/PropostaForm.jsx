@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { FileDown, Loader } from 'lucide-react'
+import { useState } from 'react'
+import { FileDown, Loader, Plus, Trash2 } from 'lucide-react'
 import { Card, SectionTitle, Field, Input, Select, Btn } from './ui'
 
 const MESES = [
@@ -62,7 +62,7 @@ export default function PropostaForm() {
     solicitante_empresa: '',
     assunto:             TIPOS_ACAO[0],
     assunto_custom:      '',
-    mes:                 String(today.getMonth()),   // índice 0-11
+    mes:                 String(today.getMonth()),
     ano:                 String(today.getFullYear()),
     op1_valor_total:     '',
     op1_entrada:         '',
@@ -71,6 +71,7 @@ export default function PropostaForm() {
     op2_n_parcelas:      '',
     formato:             'pdf',
   })
+  const [partes, setPartes] = useState([''])
   const [resultado, setResultado] = useState(null)
   const [loading, setLoading]     = useState(false)
 
@@ -108,6 +109,7 @@ export default function PropostaForm() {
         solicitante_empresa: form.solicitante_empresa.toUpperCase(),
         assunto:             assuntoFinal,
         data_proposta:       dataProposta,
+        partes_envolvidas:   partes.filter(p => p.trim()).map(p => p.toUpperCase()),
         op1_valor_total:     form.op1_valor_total,
         op1_entrada:         form.op1_entrada,
         op1_n_parcelas:      form.op1_n_parcelas,
@@ -134,6 +136,7 @@ export default function PropostaForm() {
       op1_valor_total: '', op1_entrada: '', op1_n_parcelas: '',
       op2_avista: '', op2_n_parcelas: '', formato: 'pdf',
     })
+    setPartes([''])
     setResultado(null)
   }
 
@@ -199,6 +202,37 @@ export default function PropostaForm() {
               placeholder="2026" maxLength={4} />
           </Field>
 
+        </div>
+      </Card>
+
+      {/* Partes Envolvidas */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <SectionTitle>Partes Envolvidas</SectionTitle>
+          <Btn variant="outline" className="text-xs py-1.5"
+            onClick={() => setPartes(p => [...p, ''])}>
+            <Plus size={14} /> Adicionar
+          </Btn>
+        </div>
+        <p className="text-xs text-brand-muted mb-4 -mt-2">
+          Liste todas as partes do caso (empresa, sócios, avalistas, etc.). Aparecem no slide "Seu Caso".
+        </p>
+        <div className="space-y-2">
+          {partes.map((parte, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <Input
+                value={parte}
+                onChange={e => setPartes(p => p.map((v, idx) => idx === i ? e.target.value.toUpperCase() : v))}
+                placeholder={`Parte ${i + 1} — ex: EMPRESA LTDA ou NOME COMPLETO`}
+              />
+              {partes.length > 1 && (
+                <button onClick={() => setPartes(p => p.filter((_, idx) => idx !== i))}
+                  className="p-2 text-red-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors shrink-0">
+                  <Trash2 size={15} />
+                </button>
+              )}
+            </div>
+          ))}
         </div>
       </Card>
 

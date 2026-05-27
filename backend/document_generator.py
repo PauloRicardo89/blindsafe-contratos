@@ -728,13 +728,19 @@ def build_proposta_replacements(payload: dict) -> list[tuple[str, str]]:
     ec_str   = _f2brl(ec_val)
     tot_str  = _f2brl(tot_val)
 
+    # Partes envolvidas (slide 3): lista dinâmica separada por \n
+    partes_raw: list = payload.get("partes_envolvidas", [])
+    partes_str = "\n".join(p.strip() for p in partes_raw if p.strip()) or nome
+
     return [
         # Strings mais longas/específicas primeiro
         ("{{OP2_ECONOMIA_LONGA}}",      f"Economia de R$ {ec_str} em relação ao parcelado por boleto. Aprovação rápida."),
-        ("{{SOLICITANTE_EMPRESA}}",      empresa),
         ("{{OP2_PARCELAS_SEM_JUROS}}", f"Até {op2_np} parcelas sem juros adicionais"),
+        ("{{SOLICITANTE_EMPRESA}}",      empresa),
         ("{{ASSUNTO}}",                  assunto),
         ("{{SOLICITANTE_NOME}}",         nome),
+        ("{{PARTES_LISTADAS}}",          partes_str),
+        ("{{PARTES_S3_CLEAR}}",          ""),
         ("{{OP2_ECONOMIA_CURTA}}",      f"Economia de R$ {ec_str}"),
         ("{{OP2_TOTAL}}",               f"Total: R$ {tot_str}"),
         ("{{OP2_PARCELAS_MENSAIS}}",    f"em {op2_np} parcelas mensais"),

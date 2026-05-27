@@ -6,13 +6,17 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('frontend/dist', 'frontend/dist'),
+        ('frontend/dist',              'frontend/dist'),
+        ('templates/proposta.pptx',    'templates'),
     ],
     hiddenimports=[
         'webview.platforms.winforms',
         'clr',
         'backend.api',
         'backend.document_generator',
+        'pptx',
+        'pptx.util',
+        'pptx.enum.shapes',
     ],
     hookspath=[],
     hooksconfig={},
