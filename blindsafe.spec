@@ -45,7 +45,7 @@ exe = EXE(
     strip=False,
     upx=False,
     console=False,
-    icon=None,
+    icon='blindsafe_icon.ico',
 )
 
 coll = COLLECT(
