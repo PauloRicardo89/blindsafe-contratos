@@ -1,9 +1,10 @@
-import { FileText, FolderOpen, Settings } from 'lucide-react'
+import { FileText, FolderOpen, Settings, TrendingUp } from 'lucide-react'
 
 const items = [
-  { id: 'form',      icon: FileText,   label: 'Novo Contrato' },
-  { id: 'templates', icon: FolderOpen, label: 'Templates'     },
-  { id: 'settings',  icon: Settings,   label: 'Configurações' },
+  { id: 'form',      icon: FileText,   label: 'Novo Contrato'       },
+  { id: 'proposta',  icon: TrendingUp, label: 'Prop. de Honorários' },
+  { id: 'templates', icon: FolderOpen, label: 'Templates'           },
+  { id: 'settings',  icon: Settings,   label: 'Configurações'       },
 ]
 
 export default function Sidebar({ activePage, onNavigate }) {

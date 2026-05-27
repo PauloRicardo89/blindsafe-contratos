@@ -13,7 +13,7 @@ from pathlib import Path
 from tkinter import filedialog
 import tkinter as tk
 
-from backend.document_generator import generate_all
+from backend.document_generator import generate_all, generate_proposta
 
 # ── Caminhos base ─────────────────────────────────────────────────────────────
 # Quando empacotado pelo PyInstaller, arquivos graváveis ficam junto ao .exe
@@ -30,6 +30,7 @@ TEMPLATE_KEYS = [
     "emprestimo", "veiculo", "fiscal",
     "condominio", "condominio_aluguel", "rural",
     "procuracao", "procuracao_pj", "hipo",
+    "proposta",
 ]
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -129,6 +130,26 @@ class BlindSafeAPI:
                 payload      = payload,
                 templates_dir = TEMPLATES_DIR,
                 output_dir   = output_dir,
+            )
+            return {
+                "ok":    True,
+                "path":  str(out_folder),
+                "files": [str(f) for f in generated],
+            }
+        except FileNotFoundError as e:
+            return {"ok": False, "error": str(e)}
+        except Exception as e:
+            return {"ok": False, "error": f"Erro inesperado: {e}"}
+
+    def generate_proposta_doc(self, payload: dict) -> dict:
+        """Gera a proposta de honorários em PPTX ou PDF."""
+        cfg        = _load_config()
+        output_dir = Path(cfg.get("output_dir", ROOT_DIR / "output"))
+        try:
+            generated, out_folder = generate_proposta(
+                payload       = payload,
+                templates_dir = TEMPLATES_DIR,
+                output_dir    = output_dir,
             )
             return {
                 "ok":    True,

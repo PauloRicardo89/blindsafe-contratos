@@ -646,6 +646,153 @@ def _docx_to_pdf(docx_path: Path) -> Path:
         return docx_path  # sem Word instalado: mantém o DOCX
 
 
+def _pptx_to_pdf(pptx_path: Path) -> Path:
+    """Converte PPTX → PDF via PowerPoint COM. Se não disponível, mantém .pptx."""
+    pdf_path = pptx_path.with_suffix(".pdf")
+    try:
+        import win32com.client
+        ppt = win32com.client.Dispatch("PowerPoint.Application")
+        ppt.Visible = True
+        prs = ppt.Presentations.Open(str(pptx_path.resolve()))
+        prs.SaveAs(str(pdf_path.resolve()), 32)  # 32 = ppSaveAsPDF
+        prs.Close()
+        ppt.Quit()
+        pptx_path.unlink()
+        return pdf_path
+    except Exception:
+        return pptx_path  # sem PowerPoint: mantém o .pptx
+
+
+# ── Proposta de Honorários ────────────────────────────────────────────────────
+
+def _pptx_para_replace(para, old: str, new: str) -> bool:
+    """Substitui old→new no parágrafo, consolidando todos os runs no primeiro."""
+    full = "".join(r.text or "" for r in para.runs)
+    if not full or old not in full:
+        return False
+    new_full = full.replace(old, new)
+    if para.runs:
+        para.runs[0].text = new_full
+        for r in para.runs[1:]:
+            r.text = ""
+    return True
+
+
+def _pptx_apply_shapes(shapes, replacements: list[tuple[str, str]]) -> None:
+    """Aplica substituições em todas as shapes, recursivo para grupos."""
+    from pptx.enum.shapes import MSO_SHAPE_TYPE
+    for shape in shapes:
+        if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
+            _pptx_apply_shapes(shape.shapes, replacements)
+        elif shape.has_text_frame:
+            for para in shape.text_frame.paragraphs:
+                for old, new in replacements:
+                    _pptx_para_replace(para, old, new)
+
+
+def _brl2f(s: str) -> float:
+    try:
+        return float(s.strip().replace(".", "").replace(",", "."))
+    except Exception:
+        return 0.0
+
+
+def _f2brl(v: float) -> str:
+    return f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def build_proposta_replacements(payload: dict) -> list[tuple[str, str]]:
+    """
+    Retorna lista ordenada de (placeholder, valor_real) para preencher
+    o template proposta.pptx.
+    """
+    nome    = payload.get("solicitante_nome",    "").strip()
+    empresa = payload.get("solicitante_empresa", "").strip()
+    assunto = payload.get("assunto",             "").strip()
+    data    = payload.get("data_proposta",       "").strip()
+
+    op1_vt  = payload.get("op1_valor_total",  "").strip()
+    op1_ent = payload.get("op1_entrada",      "").strip()
+    op1_np  = payload.get("op1_n_parcelas",   "").strip()
+    op1_vp  = payload.get("op1_valor_parcela","").strip()
+
+    op2_av  = payload.get("op2_avista",        "").strip()
+    op2_np  = payload.get("op2_n_parcelas",    "").strip()
+    op2_vp  = payload.get("op2_valor_parcela", "").strip()
+
+    # Cálculos automáticos
+    ec_val   = _brl2f(op1_vt) - _brl2f(op2_av)
+    n2       = int(op2_np) if op2_np.isdigit() else 0
+    tot_val  = n2 * _brl2f(op2_vp)
+
+    ec_str   = _f2brl(ec_val)
+    tot_str  = _f2brl(tot_val)
+
+    return [
+        # Strings mais longas/específicas primeiro
+        ("{{OP2_ECONOMIA_LONGA}}",      f"Economia de R$ {ec_str} em relação ao parcelado por boleto. Aprovação rápida."),
+        ("{{SOLICITANTE_EMPRESA}}",      empresa),
+        ("{{OP2_PARCELAS_SEM_JUROS}}", f"Até {op2_np} parcelas sem juros adicionais"),
+        ("{{ASSUNTO}}",                  assunto),
+        ("{{SOLICITANTE_NOME}}",         nome),
+        ("{{OP2_ECONOMIA_CURTA}}",      f"Economia de R$ {ec_str}"),
+        ("{{OP2_TOTAL}}",               f"Total: R$ {tot_str}"),
+        ("{{OP2_PARCELAS_MENSAIS}}",    f"em {op2_np} parcelas mensais"),
+        ("{{OP1_PARCELAS}}",            f"{op1_np}x R$ {op1_vp}"),
+        ("{{DATA_PROPOSTA}}",            data),
+        ("{{OP2_ATE_PARCELAS}}",        f"Até {op2_np}x de"),
+        ("{{OP1_VALOR_TOTAL}}",         f"R$ {op1_vt}"),
+        ("{{OP2_AVISTA}}",              f"R$ {op2_av}"),
+        ("{{OP1_ENTRADA}}",             f"R$ {op1_ent}"),
+        ("{{OP2_VALOR_PARCELA}}",       f"R$ {op2_vp}"),
+    ]
+
+
+def fill_proposta_template(template_path: Path, payload: dict, out_path: Path, to_pdf: bool = True) -> Path:
+    """Preenche o template PPTX de proposta e opcionalmente converte para PDF."""
+    from pptx import Presentation
+
+    replacements = build_proposta_replacements(payload)
+    prs = Presentation(str(template_path))
+
+    for slide in prs.slides:
+        _pptx_apply_shapes(slide.shapes, replacements)
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    prs.save(str(out_path))
+    return _pptx_to_pdf(out_path) if to_pdf else out_path
+
+
+def generate_proposta(payload: dict, templates_dir: Path, output_dir: Path) -> tuple[list[Path], Path]:
+    """Gera a proposta de honorários. Retorna (lista_arquivos, pasta_saída)."""
+    tpl_path = templates_dir / "proposta.pptx"
+    if not tpl_path.exists():
+        raise FileNotFoundError("Template de Proposta não encontrado. Adicione-o na tela de Templates.")
+
+    nome      = payload.get("solicitante_nome", "cliente").title()
+    today_str = date.today().strftime("%Y%m%d")
+    safe_name = "".join(c for c in nome if c.isalnum() or c in " _-").strip()[:40]
+    to_pdf    = payload.get("formato", "pdf") == "pdf"
+    ext       = "pdf" if to_pdf else "pptx"
+
+    out_folder = output_dir / f"{safe_name} {today_str}"
+    out_folder.mkdir(parents=True, exist_ok=True)
+
+    out_file = fill_proposta_template(
+        tpl_path, payload,
+        out_folder / f"Proposta - {safe_name}.pptx",
+        to_pdf,
+    )
+    # Renomear se converteu para PDF
+    if to_pdf and out_file.suffix == ".pdf":
+        final = out_folder / f"Proposta - {safe_name}.pdf"
+        if out_file != final:
+            out_file.rename(final)
+            out_file = final
+
+    return [out_file], out_folder
+
+
 def fill_template(template_path: Path, context: dict, out_path: Path, to_pdf: bool = True) -> Path:
     """Preenche um template DOCX com docxtpl, salva e opcionalmente converte para PDF."""
     tpl = DocxTemplate(str(template_path))
