@@ -26,7 +26,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['clr', 'pythonnet', 'webview.platforms.winforms'],
     cipher=block_cipher,
     noarchive=False,
 )
