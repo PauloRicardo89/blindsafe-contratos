@@ -20,6 +20,15 @@ INDEX      = DIST_DIR / "index.html"
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+# Força pythonnet a usar o .NET Framework (já embutido em todo Windows 10/11)
+# sem isso ele tenta .NET Core, que não está instalado na maioria das máquinas
+if _FROZEN:
+    try:
+        import pythonnet
+        pythonnet.load("netfx")
+    except Exception:
+        pass
+
 from backend.api import BlindSafeAPI
 
 

@@ -16,7 +16,8 @@ a = Analysis(
         ('templates/hipo.docx',             'templates'),
     ],
     hiddenimports=[
-        'webview.platforms.edgechromium',
+        'webview.platforms.winforms',
+        'clr',
         'backend.api',
         'backend.document_generator',
         'pptx',
@@ -26,7 +27,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['clr', 'pythonnet', 'webview.platforms.winforms'],
+    excludes=[],
     cipher=block_cipher,
     noarchive=False,
 )
