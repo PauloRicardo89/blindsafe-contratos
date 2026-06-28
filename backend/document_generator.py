@@ -738,6 +738,18 @@ def build_proposta_replacements(payload: dict) -> list[tuple[str, str]]:
     partes_raw: list = payload.get("partes_envolvidas", [])
     partes_str = "\n".join(p.strip() for p in partes_raw if p.strip()) or nome
 
+    # Valor da causa e percentuais (slides 3, 5, 6, 7)
+    valor_causa = payload.get("valor_causa", "").strip()
+    causa_f = _brl2f(valor_causa) if valor_causa else 0.0
+    if causa_f > 0:
+        op1_f = _brl2f(op1_vt)
+        op2_f = _brl2f(op2_av)
+        perc_op1    = f"{op1_f / causa_f * 100:.1f}%"
+        perc_op2_av = f"{op2_f / causa_f * 100:.1f}%"
+    else:
+        perc_op1    = "—"
+        perc_op2_av = "—"
+
     return [
         # Strings mais longas/específicas primeiro
         ("{{OP2_ECONOMIA_LONGA}}",      f"Economia de R$ {ec_str} em relação ao parcelado por boleto. Aprovação rápida."),
@@ -753,6 +765,9 @@ def build_proposta_replacements(payload: dict) -> list[tuple[str, str]]:
         ("{{OP1_PARCELAS}}",            f"{op1_np}x R$ {op1_vp}"),
         ("{{DATA_PROPOSTA}}",            data),
         ("{{OP2_ATE_PARCELAS}}",        f"Até {op2_np}x de"),
+        ("{{PERC_OP2_AV}}",             perc_op2_av),
+        ("{{PERC_OP1}}",                perc_op1),
+        ("{{VALOR_CAUSA}}",             f"R$ {valor_causa}" if valor_causa else "—"),
         ("{{OP1_VALOR_TOTAL}}",         f"R$ {op1_vt}"),
         ("{{OP2_AVISTA}}",              f"R$ {op2_av}"),
         ("{{OP1_ENTRADA}}",             f"R$ {op1_ent}"),

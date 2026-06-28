@@ -64,6 +64,7 @@ export default function PropostaForm() {
     assunto_custom:      '',
     mes:                 String(today.getMonth()),
     ano:                 String(today.getFullYear()),
+    valor_causa:         '',
     op1_valor_total:     '',
     op1_entrada:         '',
     op1_n_parcelas:      '',
@@ -98,6 +99,7 @@ export default function PropostaForm() {
 
   const handleGerar = async () => {
     if (!form.solicitante_nome) { alert('Preencha o nome do solicitante.'); return }
+    if (!form.valor_causa)      { alert('Preencha o valor total da causa.'); return }
     if (!form.op1_valor_total)  { alert('Preencha o valor total da Opção 1.'); return }
     if (!form.op2_avista)       { alert('Preencha o valor à vista da Opção 2.'); return }
 
@@ -110,6 +112,7 @@ export default function PropostaForm() {
         assunto:             assuntoFinal,
         data_proposta:       dataProposta,
         partes_envolvidas:   partes.filter(p => p.trim()).map(p => p.toUpperCase()),
+        valor_causa:         form.valor_causa,
         op1_valor_total:     form.op1_valor_total,
         op1_entrada:         form.op1_entrada,
         op1_n_parcelas:      form.op1_n_parcelas,
@@ -133,6 +136,7 @@ export default function PropostaForm() {
     setForm({
       solicitante_nome: '', solicitante_empresa: '', assunto: TIPOS_ACAO[0],
       assunto_custom: '', mes: String(today.getMonth()), ano: String(today.getFullYear()),
+      valor_causa: '',
       op1_valor_total: '', op1_entrada: '', op1_n_parcelas: '',
       op2_avista: '', op2_n_parcelas: '', formato: 'pdf',
     })
@@ -200,6 +204,13 @@ export default function PropostaForm() {
             <Input value={form.ano}
               onChange={e => f('ano')(fmtOnlyNum(e.target.value).slice(0, 4))}
               placeholder="2026" maxLength={4} />
+          </Field>
+
+          <Field label="Valor Total da Causa (R$)" required className="col-span-2"
+            hint="Valor total da dívida ou do processo — usado para calcular percentuais de honorários">
+            <Input value={form.valor_causa}
+              onChange={e => f('valor_causa')(fmtBRL(e.target.value))}
+              placeholder="0,00" />
           </Field>
 
         </div>
