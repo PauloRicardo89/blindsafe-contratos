@@ -424,6 +424,9 @@ def build_bloco_cliente(client: dict) -> RichText:
     email = client.get("email", "")
     if email:
         rt.add(f", Email: {email}", **kw)
+    telefone = client.get("telefone", "")
+    if telefone:
+        rt.add(f", tel: {telefone}", **kw)
     rt.add(f", {residente} na {endereco}", **kw)
     if cidade and uf:
         rt.add(f", {cidade}/{uf}", **kw)
@@ -483,6 +486,9 @@ def build_bloco_cliente_pj(client: dict, empresa: dict) -> RichText:
     email = client.get("email", "")
     if email:
         rt.add(f", Email: {email}", **kw)
+    telefone = client.get("telefone", "")
+    if telefone:
+        rt.add(f", tel: {telefone}", **kw)
     rt.add(f", {residente} na {endereco}", **kw)
     if cidade and uf:
         rt.add(f", {cidade}/{uf}", **kw)

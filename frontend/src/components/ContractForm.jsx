@@ -47,6 +47,13 @@ function fmtCNPJ(v) {
   return `${n.slice(0,2)}.${n.slice(2,5)}.${n.slice(5,8)}/${n.slice(8,12)}-${n.slice(12)}`
 }
 
+function fmtTelefone(v) {
+  const n = v.replace(/\D/g, '').slice(0, 11)
+  if (n.length <= 2) return n.length ? `(${n}` : n
+  if (n.length <= 7) return `(${n.slice(0,2)}) ${n.slice(2)}`
+  return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`
+}
+
 function fmtDate(v) {
   const n = v.replace(/\D/g, '').slice(0, 8)
   if (n.length <= 2) return n
@@ -71,7 +78,7 @@ const EMPTY_CLIENT = {
   nome: '', nacionalidade: 'brasileiro', estado_civil: 'solteiro',
   profissao: '', cpf: '', rg: '',
   rua: '', bairro: '', complemento: '', cidade: '', uf: 'RJ', cep: '',
-  email: '',
+  email: '', telefone: '',
 }
 
 const EMPTY_PROCESS = {
@@ -207,6 +214,12 @@ function ClientSection({ data, onChange }) {
           <Input value={data.email}
             onChange={e => f('email')(e.target.value)}
             placeholder="email@exemplo.com" type="email" />
+        </Field>
+
+        <Field label="Telefone" required>
+          <Input value={data.telefone}
+            onChange={e => f('telefone')(fmtTelefone(e.target.value))}
+            placeholder="(00) 00000-0000" maxLength={15} />
         </Field>
 
       </div>
