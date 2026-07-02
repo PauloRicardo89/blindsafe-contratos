@@ -210,7 +210,7 @@ function ClientSection({ data, onChange }) {
             placeholder="Número do documento" />
         </Field>
 
-        <Field label="E-mail">
+        <Field label="E-mail" required>
           <Input value={data.email}
             onChange={e => f('email')(e.target.value)}
             placeholder="email@exemplo.com" type="email" />
@@ -688,8 +688,8 @@ export default function ContractForm() {
   const [result, setResult]         = useState(null)
 
   const handleGenerate = async () => {
-    if (!client.nome || !client.cpf || !client.cidade) {
-      alert('Preencha pelo menos: Nome, CPF e Cidade.')
+    if (!client.nome || !client.cpf || !client.cidade || !client.email) {
+      alert('Preencha pelo menos: Nome, CPF, Cidade e E-mail.')
       return
     }
     if (!docs.contrato && !docs.procuracao && !docs.hipo) {
