@@ -639,6 +639,35 @@ TEMPLATE_KEYS = {
     "rural":              "rural",
 }
 
+# Tipos de contrato que recebem procuração extrajudicial automaticamente ao final
+_EXTRAJUDICIAL_CONTRACT_TYPES = {"emprestimo", "veiculo", "fiscal", "rural"}
+
+
+def _append_docx(base_path: Path, append_path: Path, output_path: Path) -> None:
+    """Anexa o conteúdo de append_path ao final de base_path, salvando em output_path."""
+    from docx import Document
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    from copy import deepcopy
+
+    base  = Document(str(base_path))
+    extra = Document(str(append_path))
+
+    # Quebra de página antes do conteúdo anexado
+    p   = base.add_paragraph()
+    run = p.add_run()
+    br  = OxmlElement('w:br')
+    br.set(qn('w:type'), 'page')
+    run._r.append(br)
+
+    # Copia todos os elementos do corpo, exceto sectPr final (evita conflito de formatação)
+    for element in extra.element.body:
+        if element.tag.endswith('}sectPr'):
+            continue
+        base.element.body.append(deepcopy(element))
+
+    base.save(str(output_path))
+
 
 def _docx_to_pdf(docx_path: Path) -> Path:
     """Converte DOCX para PDF e remove o DOCX."""
@@ -865,7 +894,30 @@ def generate_all(
         tpl_path = templates_dir / f"{key}.docx"
         if not tpl_path.exists():
             raise FileNotFoundError(f"Template não encontrado: {tpl_path.name}\nAdicione-o na tela de Templates.")
-        out = fill_template(tpl_path, context, out_folder / f"Contrato - {safe_name}.docx", to_pdf)
+
+        contract_docx = out_folder / f"Contrato - {safe_name}.docx"
+        is_pj = docs.get("procuracao_pj", False)
+        extrajud_tpl = templates_dir / (
+            "procuracao_extrajudicial_pj.docx" if is_pj else "procuracao_extrajudicial.docx"
+        )
+
+        if contract_type in _EXTRAJUDICIAL_CONTRACT_TYPES and extrajud_tpl.exists():
+            # Renderiza o contrato sem converter para PDF ainda
+            fill_template(tpl_path, context, contract_docx, to_pdf=False)
+
+            # Renderiza a procuração extrajudicial em arquivo temporário
+            extrajud_tmp = out_folder / "_extrajudicial_tmp.docx"
+            fill_template(extrajud_tpl, context, extrajud_tmp, to_pdf=False)
+
+            # Anexa a extrajudicial ao final do contrato
+            _append_docx(contract_docx, extrajud_tmp, contract_docx)
+            extrajud_tmp.unlink(missing_ok=True)
+
+            # Converte o documento unificado para PDF
+            out = _docx_to_pdf(contract_docx) if to_pdf else contract_docx
+        else:
+            out = fill_template(tpl_path, context, contract_docx, to_pdf)
+
         generated.append(out)
 
     # Procuração
