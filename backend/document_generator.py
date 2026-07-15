@@ -643,8 +643,61 @@ TEMPLATE_KEYS = {
 _EXTRAJUDICIAL_CONTRACT_TYPES = {"emprestimo", "veiculo", "fiscal", "rural"}
 
 
-def _append_docx(base_path: Path, append_path: Path, output_path: Path) -> None:
-    """Anexa o conteúdo de append_path ao final de base_path, salvando em output_path."""
+def _compact_procuracao(docx_path: Path) -> None:
+    """Aperta o espaçamento (fonte mantida em 11pt) — só usado no arquivo da
+    procuração extrajudicial, para caber em 1 página quando anexada ao contrato.
+    Nunca aplicado ao contrato.
+    """
+    from docx import Document
+    from docx.shared import Pt
+
+    doc = Document(str(docx_path))
+    for p in doc.paragraphs:
+        pf = p.paragraph_format
+        pf.line_spacing = 1.0
+        pf.space_before = Pt(0)
+        pf.space_after  = Pt(2)
+        for r in p.runs:
+            r.font.size = Pt(11)
+    doc.save(str(docx_path))
+
+
+def _collapse_empty_paragraphs(docx_path: Path, max_consecutive: int = 1) -> None:
+    """Reduz sequências de parágrafos vazios consecutivos a no máximo max_consecutive.
+
+    Alguns templates têm 3 parágrafos vazios empilhados antes do bloco de assinatura,
+    o que causa overflow para uma página extra quase em branco (só cabeçalho/rodapé).
+    Colapsar esse espaçamento excessivo evita a página em branco sem alterar conteúdo real.
+    """
+    from docx import Document
+    from docx.oxml.ns import qn
+
+    doc  = Document(str(docx_path))
+    body = doc.element.body
+
+    run = []
+    for el in list(body):
+        if el.tag == qn('w:p'):
+            texts = el.findall('.//' + qn('w:t'))
+            is_empty = not any((t.text or '').strip() for t in texts)
+            if is_empty:
+                run.append(el)
+                continue
+        if len(run) > max_consecutive:
+            for extra in run[max_consecutive:]:
+                body.remove(extra)
+        run = []
+    if len(run) > max_consecutive:
+        for extra in run[max_consecutive:]:
+            body.remove(extra)
+
+    doc.save(str(docx_path))
+
+
+def _append_docx_simple(base_path: Path, append_path: Path, output_path: Path) -> None:
+    """Anexa conteúdo de append_path ao final de base_path com quebra de página simples.
+    Insere tudo ANTES do sectPr final para manter OOXML válido.
+    """
     from docx import Document
     from docx.oxml import OxmlElement
     from docx.oxml.ns import qn
@@ -652,19 +705,28 @@ def _append_docx(base_path: Path, append_path: Path, output_path: Path) -> None:
 
     base  = Document(str(base_path))
     extra = Document(str(append_path))
+    base_body = base.element.body
 
-    # Quebra de página antes do conteúdo anexado
-    p   = base.add_paragraph()
-    run = p.add_run()
+    # Posição do sectPr final (deve ser o último elemento do body)
+    sect_pr = base_body.find(qn('w:sectPr'))
+    insert_pos = list(base_body).index(sect_pr) if sect_pr is not None else len(list(base_body))
+
+    # Cria parágrafo com quebra de página e insere ANTES do sectPr
+    p   = OxmlElement('w:p')
+    r   = OxmlElement('w:r')
     br  = OxmlElement('w:br')
     br.set(qn('w:type'), 'page')
-    run._r.append(br)
+    r.append(br)
+    p.append(r)
+    base_body.insert(insert_pos, p)
+    insert_pos += 1
 
-    # Copia todos os elementos do corpo, exceto sectPr final (evita conflito de formatação)
+    # Insere conteúdo da procuração ANTES do sectPr
     for element in extra.element.body:
         if element.tag.endswith('}sectPr'):
             continue
-        base.element.body.append(deepcopy(element))
+        base_body.insert(insert_pos, deepcopy(element))
+        insert_pos += 1
 
     base.save(str(output_path))
 
@@ -902,18 +964,19 @@ def generate_all(
         )
 
         if contract_type in _EXTRAJUDICIAL_CONTRACT_TYPES and extrajud_tpl.exists():
-            # Renderiza o contrato sem converter para PDF ainda
-            fill_template(tpl_path, context, contract_docx, to_pdf=False)
-
-            # Renderiza a procuração extrajudicial em arquivo temporário
+            contract_tmp = out_folder / "_contract_tmp.docx"
             extrajud_tmp = out_folder / "_extrajudicial_tmp.docx"
-            fill_template(extrajud_tpl, context, extrajud_tmp, to_pdf=False)
 
-            # Anexa a extrajudicial ao final do contrato
-            _append_docx(contract_docx, extrajud_tmp, contract_docx)
+            fill_template(tpl_path,     context, contract_tmp,  to_pdf=False)
+            fill_template(extrajud_tpl, context, extrajud_tmp,  to_pdf=False)
+            _collapse_empty_paragraphs(contract_tmp)
+            _compact_procuracao(extrajud_tmp)
+
+            # Mescla num unico docx (mesma formatacao/margem do contrato em ambos
+            # os formatos de saida) e so entao converte para PDF se necessario
+            _append_docx_simple(contract_tmp, extrajud_tmp, contract_docx)
+            contract_tmp.unlink(missing_ok=True)
             extrajud_tmp.unlink(missing_ok=True)
-
-            # Converte o documento unificado para PDF
             out = _docx_to_pdf(contract_docx) if to_pdf else contract_docx
         else:
             out = fill_template(tpl_path, context, contract_docx, to_pdf)
