@@ -16,6 +16,7 @@ a = Analysis(
         ('templates/emprestimo.docx',       'templates'),
         ('templates/veiculo.docx',          'templates'),
         ('templates/hipo.docx',             'templates'),
+        ('templates/declaracao_residencia.docx', 'templates'),
         ('templates/fiscal.docx',           'templates'),
         ('templates/rural.docx',            'templates'),
     ],

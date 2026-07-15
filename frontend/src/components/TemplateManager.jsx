@@ -14,12 +14,13 @@ const TEMPLATE_LABELS = {
   'procuracao_extrajudicial':     'Procuração Extrajudicial (PF)',
   'procuracao_extrajudicial_pj':  'Procuração Extrajudicial (PJ)',
   'hipo':                      'Hipossuficiência',
+  'declaracao_residencia':     'Declaração de Residência',
 }
 
 function pyapi(fn, ...args) {
   if (window.pywebview?.api) return window.pywebview.api[fn](...args)
   return Promise.resolve({ templates: Object.fromEntries(
-    Object.keys(TEMPLATE_LABELS).map(k => [k, { exists: !['rural','procuracao_extrajudicial','procuracao_extrajudicial_pj'].includes(k), filename: `${k}.docx` }])
+    Object.keys(TEMPLATE_LABELS).map(k => [k, { exists: !['rural','procuracao_extrajudicial','procuracao_extrajudicial_pj','declaracao_residencia'].includes(k), filename: `${k}.docx` }])
   )})
 }
 
@@ -113,7 +114,7 @@ export default function TemplateManager() {
           <p className="text-sm text-brand-muted">Carregando...</p>
         ) : (
           <div className="space-y-2">
-            {['procuracao','procuracao_pj','procuracao_extrajudicial','procuracao_extrajudicial_pj','hipo'].map(key => {
+            {['procuracao','procuracao_pj','procuracao_extrajudicial','procuracao_extrajudicial_pj','hipo','declaracao_residencia'].map(key => {
               const tpl = templates[key] || {}
               return (
                 <div key={key} className="flex items-center justify-between py-3 px-4 rounded-lg bg-brand-bg">

@@ -552,6 +552,15 @@ def build_context(payload: dict) -> dict[str, Any]:
             return "Não"
         return f"Sim, {num}" if num else "Sim"
 
+    def build_finalidade_declaracao(p: dict) -> str:
+        """Texto de finalidade da Declaração de Residência: cita o processo
+        quando existir número; senão usa frase genérica (ex: ação a ser
+        proposta, revisional ainda não distribuída)."""
+        num = p.get("numero_processo", "").strip() if p.get("existe_processo") == "sim" else ""
+        if num:
+            return f"para fins de juntada nos autos do processo judicial nº {num}"
+        return "para os devidos fins de direito"
+
     processos_ctx = [
         {
             "banco":             p.get("banco", ""),
@@ -587,6 +596,7 @@ def build_context(payload: dict) -> dict[str, Any]:
         "bloco_procuracao_pj":  build_bloco_procuracao_pj(client, empresa),
         "bloco_hipo":        build_bloco_hipo(client),
         "local_data":        build_local_data(client.get("cidade", ""), client.get("uf", "")),
+        "finalidade_declaracao": build_finalidade_declaracao(proc0),
 
         # Processo 1 (atalho)
         "banco":             proc0.get("banco", ""),
@@ -999,6 +1009,14 @@ def generate_all(
         if not tpl_path.exists():
             raise FileNotFoundError("Template de Hipossuficiência não encontrado.")
         out = fill_template(tpl_path, context, out_folder / "Hipossuficiencia.docx", to_pdf)
+        generated.append(out)
+
+    # Declaração de Residência
+    if docs.get("declaracao_residencia"):
+        tpl_path = templates_dir / "declaracao_residencia.docx"
+        if not tpl_path.exists():
+            raise FileNotFoundError("Template de Declaração de Residência não encontrado.")
+        out = fill_template(tpl_path, context, out_folder / "Declaracao de Residencia.docx", to_pdf)
         generated.append(out)
 
     return generated, out_folder

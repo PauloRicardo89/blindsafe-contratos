@@ -35,6 +35,7 @@ TEMPLATE_KEYS = [
     "emprestimo", "veiculo", "fiscal",
     "condominio", "condominio_aluguel", "rural",
     "procuracao", "procuracao_pj", "procuracao_extrajudicial", "procuracao_extrajudicial_pj", "hipo",
+    "declaracao_residencia",
     "proposta", "contrato_veiculo",
 ]
 
