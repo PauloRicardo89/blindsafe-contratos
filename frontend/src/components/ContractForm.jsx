@@ -580,6 +580,7 @@ function DocsSection({ docs, empresa, onDocsChange, onEmpresaChange }) {
         <Checkbox label="Contrato"         checked={docs.contrato}   onChange={() => toggle('contrato')} />
         <Checkbox label="Procuração"       checked={docs.procuracao} onChange={() => toggle('procuracao')} />
         <Checkbox label="Hipossuficiência" checked={docs.hipo}       onChange={() => toggle('hipo')} />
+        <Checkbox label="Declaração de Residência" checked={docs.declaracao_residencia} onChange={() => toggle('declaracao_residencia')} />
       </div>
 
       {docs.procuracao && (
@@ -681,7 +682,7 @@ export default function ContractForm() {
   const [processes, setProcesses]   = useState([{ ...EMPTY_PROCESS }])
   const [vehicle, setVehicle]       = useState({ ...EMPTY_VEHICLE })
   const [payment, setPayment]       = useState({ ...EMPTY_PAYMENT_BOLETO })
-  const [docs, setDocs]             = useState({ contrato: true, procuracao: true, hipo: false, procuracao_pj: false })
+  const [docs, setDocs]             = useState({ contrato: true, procuracao: true, hipo: false, procuracao_pj: false, declaracao_residencia: false })
   const [empresa, setEmpresa]       = useState({ ...EMPTY_EMPRESA })
   const [formato, setFormato]       = useState('pdf')
   const [loading, setLoading]       = useState(false)
@@ -692,7 +693,7 @@ export default function ContractForm() {
       alert('Preencha pelo menos: Nome, CPF, Cidade e E-mail.')
       return
     }
-    if (!docs.contrato && !docs.procuracao && !docs.hipo) {
+    if (!docs.contrato && !docs.procuracao && !docs.hipo && !docs.declaracao_residencia) {
       alert('Selecione pelo menos um documento para gerar.')
       return
     }
@@ -720,7 +721,7 @@ export default function ContractForm() {
     setProcesses([{ ...EMPTY_PROCESS }])
     setVehicle({ ...EMPTY_VEHICLE })
     setPayment({ ...EMPTY_PAYMENT_BOLETO })
-    setDocs({ contrato: true, procuracao: true, hipo: false, procuracao_pj: false })
+    setDocs({ contrato: true, procuracao: true, hipo: false, procuracao_pj: false, declaracao_residencia: false })
     setEmpresa({ ...EMPTY_EMPRESA })
     setFormato('pdf')
     setResult(null)
