@@ -91,8 +91,9 @@ class BlindSafeAPI:
             result[key] = {
                 "exists":   tpl.exists(),
                 "filename": tpl.name if tpl.exists() else "",
+                "path":     str(tpl),
             }
-        return {"templates": result}
+        return {"templates": result, "folder": str(TEMPLATES_DIR)}
 
     def replace_template(self, key: str) -> dict:
         if key not in TEMPLATE_KEYS:
