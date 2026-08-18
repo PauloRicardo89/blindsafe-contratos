@@ -20,17 +20,13 @@ const TEMPLATE_LABELS = {
 
 function pyapi(fn, ...args) {
   if (window.pywebview?.api) return window.pywebview.api[fn](...args)
-  return Promise.resolve({
-    folder: 'C:\BlindSafe\templates',
-    templates: Object.fromEntries(
-      Object.keys(TEMPLATE_LABELS).map(k => [k, { exists: true, filename: `${k}.docx`, path: `C:\BlindSafe\templates\${k}.docx` }])
-    ),
-  })
+  return Promise.resolve({ templates: Object.fromEntries(
+    Object.keys(TEMPLATE_LABELS).map(k => [k, { exists: true, filename: `${k}.docx` }])
+  )})
 }
 
 export default function TemplateManager() {
   const [templates, setTemplates] = useState({})
-  const [folder, setFolder] = useState('')
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(null)
 
@@ -38,7 +34,6 @@ export default function TemplateManager() {
     setLoading(true)
     const res = await pyapi('get_templates')
     setTemplates(res.templates || {})
-    setFolder(res.folder || '')
     setLoading(false)
   }
 
@@ -74,12 +69,6 @@ export default function TemplateManager() {
             <p className="font-medium text-brand-dark">Como funciona</p>
             <p className="mt-1">Os templates são arquivos <strong>.docx</strong> com marcadores <code className="bg-amber-100 px-1 rounded text-xs">{'{{campo}}'}</code> nos locais certos.
             Para substituir um template, clique em <strong>Substituir</strong> e selecione o novo arquivo .docx.</p>
-            {folder && (
-              <p className="mt-2 text-xs">
-                O aplicativo procura os modelos nesta pasta:{' '}
-                <code className="bg-amber-100 px-1 rounded break-all">{folder}</code>
-              </p>
-            )}
           </div>
         </div>
       </Card>
@@ -99,7 +88,7 @@ export default function TemplateManager() {
                     <FileText size={16} className={tpl.exists ? 'text-brand-gold' : 'text-gray-300'} />
                     <div>
                       <p className="text-sm font-semibold text-brand-dark">{TEMPLATE_LABELS[key]}</p>
-                      <p className="text-xs text-brand-muted break-all" title={tpl.path || ''}>{tpl.path || 'Não configurado'}</p>
+                      <p className="text-xs text-brand-muted">{tpl.filename || 'Não configurado'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -134,7 +123,7 @@ export default function TemplateManager() {
                     <FileText size={16} className={tpl.exists ? 'text-brand-gold' : 'text-gray-300'} />
                     <div>
                       <p className="text-sm font-semibold text-brand-dark">{TEMPLATE_LABELS[key]}</p>
-                      <p className="text-xs text-brand-muted break-all" title={tpl.path || ''}>{tpl.path || 'Não configurado'}</p>
+                      <p className="text-xs text-brand-muted">{tpl.filename || 'Não configurado'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
