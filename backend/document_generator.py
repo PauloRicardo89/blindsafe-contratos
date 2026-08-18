@@ -1000,7 +1000,7 @@ def generate_all(
         tpl_path = templates_dir / tpl_name
         if not tpl_path.exists():
             raise FileNotFoundError(f"Template de Procuração {'PJ ' if is_pj else ''}não encontrado.")
-        out = fill_template(tpl_path, context, out_folder / "Procuracao.docx", to_pdf)
+        out = fill_template(tpl_path, context, out_folder / f"Procuracao - {safe_name}.docx", to_pdf)
         generated.append(out)
 
     # Hipossuficiência
@@ -1008,7 +1008,7 @@ def generate_all(
         tpl_path = templates_dir / "hipo.docx"
         if not tpl_path.exists():
             raise FileNotFoundError("Template de Hipossuficiência não encontrado.")
-        out = fill_template(tpl_path, context, out_folder / "Hipossuficiencia.docx", to_pdf)
+        out = fill_template(tpl_path, context, out_folder / f"Hipossuficiencia - {safe_name}.docx", to_pdf)
         generated.append(out)
 
     # Declaração de Residência
@@ -1016,7 +1016,7 @@ def generate_all(
         tpl_path = templates_dir / "declaracao_residencia.docx"
         if not tpl_path.exists():
             raise FileNotFoundError("Template de Declaração de Residência não encontrado.")
-        out = fill_template(tpl_path, context, out_folder / "Declaracao de Residencia.docx", to_pdf)
+        out = fill_template(tpl_path, context, out_folder / f"Declaracao de Residencia - {safe_name}.docx", to_pdf)
         generated.append(out)
 
     return generated, out_folder
@@ -1068,5 +1068,5 @@ def generate_contrato_veiculo(
     out_folder = output_dir / f"{safe_name} {today_str}"
     out_folder.mkdir(parents=True, exist_ok=True)
 
-    out = fill_template(tpl_path, context, out_folder / "Contrato Veiculo.docx", to_pdf)
+    out = fill_template(tpl_path, context, out_folder / f"Contrato Veiculo - {safe_name}.docx", to_pdf)
     return out, out_folder

@@ -55,7 +55,7 @@ export default function Settings() {
         <SectionTitle>Sobre</SectionTitle>
         <div className="space-y-2 text-sm text-brand-muted">
           <p><span className="font-semibold text-brand-dark">Aplicativo:</span> BLINDSAFE Contratos</p>
-          <p><span className="font-semibold text-brand-dark">Versão:</span> 2.0</p>
+          <p><span className="font-semibold text-brand-dark">Versão:</span> 3.9</p>
           <p><span className="font-semibold text-brand-dark">Tecnologia:</span> Python + React + PyWebView</p>
         </div>
         <div className="mt-4 pt-4 border-t border-amber-200/60 text-xs text-brand-muted">
